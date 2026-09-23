@@ -1,0 +1,172 @@
+{
+  "nav": {
+    "home": "الرئيسية",
+    "products": "المنتجات",
+    "orders": "طلباتي",
+    "cart": "السلة",
+    "login": "تسجيل الدخول",
+    "register": "حساب جديد",
+    "logout": "خروج",
+    "admin": "لوحة التحكم",
+    "account": "حسابي"
+  },
+  "hero": {
+    "title": "Sovereign - رفيقك في الطب",
+    "subtitle": "سكرابات وأدوات طبية عالية الجودة لطلاب الطب في مصر",
+    "cta": "تسوق الآن",
+    "secondary": "تعرف علينا",
+    "badge": "الشحن مجاني للطلبات فوق 1000 ج.م"
+  },
+  "features": {
+    "quality": "جودة عالية",
+    "qualityDesc": "منتجات مختارة بعناية",
+    "shipping": "شحن سريع",
+    "shippingDesc": "لجميع محافظات مصر",
+    "support": "دعم 24/7",
+    "supportDesc": "على واتساب دائماً",
+    "payment": "دفع آمن",
+    "paymentDesc": "فودافون كاش"
+  },
+  "sections": {
+    "featured": "منتجات مميزة",
+    "featuredDesc": "الأكثر مبيعاً لدى طلاب الطب",
+    "categories": "التصنيفات",
+    "allProducts": "كل المنتجات"
+  },
+  "product": {
+    "addToCart": "أضف للسلة",
+    "buyNow": "اشترِ الآن",
+    "outOfStock": "غير متوفر",
+    "inStock": "متوفر",
+    "price": "السعر",
+    "quantity": "الكمية",
+    "description": "الوصف",
+    "reviews": "التقييمات",
+    "addReview": "أضف تقييم",
+    "yourRating": "تقييمك",
+    "yourComment": "تعليقك",
+    "submitReview": "إرسال",
+    "noReviews": "لا توجد تقييمات بعد",
+    "relatedProducts": "منتجات مشابهة"
+  },
+  "cart": {
+    "title": "سلة التسوق",
+    "empty": "السلة فارغة",
+    "emptyDesc": "ابدأ التسوق الآن واستكشف منتجاتنا",
+    "subtotal": "المجموع الفرعي",
+    "discount": "الخصم",
+    "total": "الإجمالي",
+    "checkout": "إتمام الشراء",
+    "continue": "متابعة التسوق",
+    "remove": "حذف",
+    "coupon": "كود الخصم",
+    "apply": "تطبيق",
+    "couponApplied": "تم تطبيق الكود!",
+    "couponInvalid": "كود غير صحيح"
+  },
+  "checkout": {
+    "title": "إتمام الطلب",
+    "name": "الاسم",
+    "phone": "رقم الهاتف",
+    "address": "العنوان",
+    "vodafoneCash": "الدفع عبر فودافون كاش",
+    "vodafoneInstructions": "قم بتحويل مبلغ الطلب إلى رقم فودافون كاش التالي ثم ارفع صورة التحويل",
+    "vodafoneNumber": "رقم فودافون كاش",
+    "copy": "نسخ",
+    "copied": "تم النسخ!",
+    "uploadReceipt": "ارفع صورة التحويل",
+    "chooseImage": "اختر صورة",
+    "placeOrder": "تأكيد الطلب",
+    "orderSuccess": "تم استلام طلبك بنجاح!",
+    "pendingNote": "الطلب قيد المراجعة حتى يتم تأكيد استلام المبلغ من قبل الإدارة",
+    "orderNumber": "رقم الطلب",
+    "loginRequired": "يجب تسجيل الدخول لإتمام الطلب"
+  },
+  "orders": {
+    "title": "طلباتي",
+    "empty": "لا يوجد طلبات",
+    "orderNumber": "طلب رقم",
+    "date": "التاريخ",
+    "status": "الحالة",
+    "total": "الإجمالي",
+    "items": "العناصر",
+    "statuses": {
+      "pending": "قيد المراجعة",
+      "confirmed": "تم التأكيد",
+      "shipped": "تم الشحن",
+      "delivered": "تم التسليم",
+      "cancelled": "ملغي"
+    }
+  },
+  "auth": {
+    "login": "تسجيل الدخول",
+    "register": "إنشاء حساب",
+    "email": "البريد الإلكتروني",
+    "password": "كلمة المرور",
+    "name": "الاسم الكامل",
+    "phone": "رقم الهاتف",
+    "submitLogin": "دخول",
+    "submitRegister": "تسجيل",
+    "noAccount": "ليس لديك حساب؟",
+    "hasAccount": "لديك حساب بالفعل؟",
+    "loginSuccess": "تم تسجيل الدخول",
+    "registerSuccess": "تم إنشاء الحساب",
+    "error": "حدث خطأ، حاول مرة أخرى"
+  },
+  "admin": {
+    "title": "لوحة التحكم",
+    "dashboard": "الرئيسية",
+    "products": "المنتجات",
+    "orders": "الطلبات",
+    "coupons": "الكوبونات",
+    "addProduct": "إضافة منتج",
+    "editProduct": "تعديل منتج",
+    "addCoupon": "إضافة كوبون",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "confirm": "تأكيد",
+    "edit": "تعديل",
+    "status": "الحالة",
+    "viewReceipt": "عرض الإيصال",
+    "stats": {
+      "orders": "إجمالي الطلبات",
+      "pending": "طلبات معلقة",
+      "products": "المنتجات",
+      "revenue": "الإيرادات"
+    },
+    "fields": {
+      "nameAr": "الاسم بالعربي",
+      "nameEn": "الاسم بالإنجليزي",
+      "descAr": "الوصف بالعربي",
+      "descEn": "الوصف بالإنجليزي",
+      "price": "السعر",
+      "oldPrice": "السعر القديم",
+      "image": "رابط الصورة",
+      "category": "التصنيف",
+      "stock": "الكمية المتاحة",
+      "code": "الكود",
+      "discountPercent": "نسبة الخصم %",
+      "active": "مفعّل"
+    },
+    "notAuthorized": "غير مصرح لك بالدخول"
+  },
+  "footer": {
+    "about": "عن المتجر",
+    "aboutText": "Sovereign هو متجرك الأول للسكرابات والأدوات الطبية عالية الجودة في مصر.",
+    "contact": "تواصل معنا",
+    "links": "روابط سريعة",
+    "rights": "جميع الحقوق محفوظة",
+    "follow": "تابعنا"
+  },
+  "whatsapp": {
+    "tooltip": "تواصل معنا على واتساب"
+  },
+  "common": {
+    "loading": "جاري التحميل...",
+    "search": "ابحث...",
+    "all": "الكل",
+    "egp": "ج.م",
+    "back": "رجوع"
+  }
+}

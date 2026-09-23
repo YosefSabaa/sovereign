@@ -1,0 +1,172 @@
+{
+  "nav": {
+    "home": "Home",
+    "products": "Products",
+    "orders": "My Orders",
+    "cart": "Cart",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "admin": "Admin",
+    "account": "Account"
+  },
+  "hero": {
+    "title": "Sovereign - Your Medical Companion",
+    "subtitle": "Premium scrubs and medical gear for medical students in Egypt",
+    "cta": "Shop Now",
+    "secondary": "About Us",
+    "badge": "Free shipping on orders over 1000 EGP"
+  },
+  "features": {
+    "quality": "Premium Quality",
+    "qualityDesc": "Carefully selected products",
+    "shipping": "Fast Shipping",
+    "shippingDesc": "All over Egypt",
+    "support": "24/7 Support",
+    "supportDesc": "Always on WhatsApp",
+    "payment": "Secure Payment",
+    "paymentDesc": "Vodafone Cash"
+  },
+  "sections": {
+    "featured": "Featured Products",
+    "featuredDesc": "Best sellers among medical students",
+    "categories": "Categories",
+    "allProducts": "All Products"
+  },
+  "product": {
+    "addToCart": "Add to Cart",
+    "buyNow": "Buy Now",
+    "outOfStock": "Out of Stock",
+    "inStock": "In Stock",
+    "price": "Price",
+    "quantity": "Quantity",
+    "description": "Description",
+    "reviews": "Reviews",
+    "addReview": "Add Review",
+    "yourRating": "Your Rating",
+    "yourComment": "Your Comment",
+    "submitReview": "Submit",
+    "noReviews": "No reviews yet",
+    "relatedProducts": "Related Products"
+  },
+  "cart": {
+    "title": "Shopping Cart",
+    "empty": "Cart is empty",
+    "emptyDesc": "Start shopping and explore our products",
+    "subtotal": "Subtotal",
+    "discount": "Discount",
+    "total": "Total",
+    "checkout": "Checkout",
+    "continue": "Continue Shopping",
+    "remove": "Remove",
+    "coupon": "Coupon Code",
+    "apply": "Apply",
+    "couponApplied": "Coupon applied!",
+    "couponInvalid": "Invalid coupon"
+  },
+  "checkout": {
+    "title": "Checkout",
+    "name": "Name",
+    "phone": "Phone",
+    "address": "Address",
+    "vodafoneCash": "Pay via Vodafone Cash",
+    "vodafoneInstructions": "Transfer the order amount to the Vodafone Cash number below, then upload your receipt",
+    "vodafoneNumber": "Vodafone Cash Number",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "uploadReceipt": "Upload Receipt",
+    "chooseImage": "Choose Image",
+    "placeOrder": "Place Order",
+    "orderSuccess": "Order received successfully!",
+    "pendingNote": "Order is pending until admin confirms payment receipt",
+    "orderNumber": "Order Number",
+    "loginRequired": "You must login to complete the order"
+  },
+  "orders": {
+    "title": "My Orders",
+    "empty": "No orders yet",
+    "orderNumber": "Order #",
+    "date": "Date",
+    "status": "Status",
+    "total": "Total",
+    "items": "Items",
+    "statuses": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "shipped": "Shipped",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled"
+    }
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "name": "Full Name",
+    "phone": "Phone",
+    "submitLogin": "Login",
+    "submitRegister": "Register",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "loginSuccess": "Logged in successfully",
+    "registerSuccess": "Account created successfully",
+    "error": "An error occurred, try again"
+  },
+  "admin": {
+    "title": "Admin Dashboard",
+    "dashboard": "Dashboard",
+    "products": "Products",
+    "orders": "Orders",
+    "coupons": "Coupons",
+    "addProduct": "Add Product",
+    "editProduct": "Edit Product",
+    "addCoupon": "Add Coupon",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "edit": "Edit",
+    "status": "Status",
+    "viewReceipt": "View Receipt",
+    "stats": {
+      "orders": "Total Orders",
+      "pending": "Pending Orders",
+      "products": "Products",
+      "revenue": "Revenue"
+    },
+    "fields": {
+      "nameAr": "Arabic Name",
+      "nameEn": "English Name",
+      "descAr": "Arabic Description",
+      "descEn": "English Description",
+      "price": "Price",
+      "oldPrice": "Old Price",
+      "image": "Image URL",
+      "category": "Category",
+      "stock": "Stock",
+      "code": "Code",
+      "discountPercent": "Discount %",
+      "active": "Active"
+    },
+    "notAuthorized": "Not authorized"
+  },
+  "footer": {
+    "about": "About",
+    "aboutText": "Sovereign is your #1 store for premium medical scrubs and gear in Egypt.",
+    "contact": "Contact Us",
+    "links": "Quick Links",
+    "rights": "All rights reserved",
+    "follow": "Follow Us"
+  },
+  "whatsapp": {
+    "tooltip": "Chat on WhatsApp"
+  },
+  "common": {
+    "loading": "Loading...",
+    "search": "Search...",
+    "all": "All",
+    "egp": "EGP",
+    "back": "Back"
+  }
+}
