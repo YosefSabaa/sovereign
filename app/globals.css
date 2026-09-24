@@ -4,28 +4,95 @@
 @tailwind utilities;
 
 html { scroll-behavior: smooth; }
-body { font-family: 'Cairo', 'Inter', sans-serif; }
+body { font-family: 'Cairo', 'Inter', sans-serif; overflow-x: hidden; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(to bottom, #14b8a6, #1e3a5f);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(to bottom, #0d9488, #152945);
+}
+
+::selection { background: #14b8a6; color: white; }
 
 @layer components {
   .btn-primary {
-    @apply bg-teal-500 hover:bg-teal-600 text-white px-6 py-3 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply relative bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white px-8 py-3 rounded-full font-semibold transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-teal-500/50 inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden;
   }
+  .btn-primary::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full;
+    transition: transform 0.6s;
+  }
+  .btn-primary:hover::before {
+    transform: translateX(100%);
+  }
+
   .btn-secondary {
-    @apply bg-navy-500 hover:bg-navy-700 text-white px-6 py-3 rounded-lg font-semibold transition-all inline-flex items-center justify-center gap-2;
+    @apply relative bg-gradient-to-r from-navy-500 to-navy-700 hover:from-navy-700 hover:to-navy-900 text-white px-8 py-3 rounded-full font-semibold transition-all duration-300 shadow-lg hover:shadow-2xl inline-flex items-center justify-center gap-2;
   }
+
   .btn-outline {
-    @apply border-2 border-navy-500 text-navy-500 hover:bg-navy-500 hover:text-white px-6 py-3 rounded-lg font-semibold transition-all inline-flex items-center justify-center gap-2;
+    @apply border-2 border-navy-500 text-navy-500 hover:bg-navy-500 hover:text-white px-8 py-3 rounded-full font-semibold transition-all duration-300 inline-flex items-center justify-center gap-2 hover:scale-105;
   }
+
   .card {
-    @apply bg-white rounded-xl shadow-md hover:shadow-xl transition-all overflow-hidden;
+    @apply bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-500 overflow-hidden relative;
   }
+
+  .card-glass {
+    @apply bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl;
+  }
+
   .input {
-    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition-all;
+    @apply w-full px-5 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all duration-300 bg-white/50 backdrop-blur-sm;
   }
+
   .label {
-    @apply block text-sm font-semibold text-navy-700 mb-2;
+    @apply block text-sm font-bold text-navy-700 mb-2;
   }
+
   .badge {
     @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-bold;
   }
+
+  .grid-bg {
+    background-image:
+      linear-gradient(to right, rgba(20, 184, 166, 0.08) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(20, 184, 166, 0.08) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .glass {
+    @apply bg-white/80 backdrop-blur-xl border border-white/40 shadow-xl;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-teal-300 via-teal-400 to-teal-500 bg-clip-text text-transparent;
+    background-size: 200% 200%;
+    animation: gradient 4s ease infinite;
+  }
+
+  .glow-pulse {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(20, 184, 166, 0.4); }
+  50% { box-shadow: 0 0 40px rgba(20, 184, 166, 0.7); }
+}
+
+@keyframes dna-rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.dna-helix {
+  animation: dna-rotate 20s linear infinite;
+  transform-origin: center;
 }

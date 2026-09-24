@@ -1,10 +1,26 @@
 'use client';
+export const dynamic = 'force-dynamic';
+
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { getProducts, Product } from '@/lib/firestore';
 import ProductCard from '@/components/ProductCard';
-import { Stethoscope, Truck, Headphones, ShieldCheck, ArrowLeft, ArrowRight } from 'lucide-react';
+import MedicalBackground from '@/components/MedicalBackground';
+import CategoriesSection from '@/components/CategoriesSection';
+import StatsSection from '@/components/StatsSection';
+import TestimonialsSection from '@/components/TestimonialsSection';
+import FAQSection from '@/components/FAQSection';
+import NewsletterSection from '@/components/NewsletterSection';
+import BrandStorySection from '@/components/BrandStorySection';
+import {
+  Stethoscope, Truck, Headphones, ShieldCheck, ArrowLeft, ArrowRight,
+  Heart, Activity, Microscope, Pill, Syringe, Package, Sparkles
+} from 'lucide-react';
+import {
+  fadeInUp, fadeInRight, staggerContainer, staggerItem, heartbeat
+} from '@/lib/animations';
 
 export default function HomePage() {
   const t = useTranslations();
@@ -12,111 +28,461 @@ export default function HomePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const { scrollY } = useScroll();
+  const heroY = useTransform(scrollY, [0, 500], [0, 150]);
+  const heroOpacity = useTransform(scrollY, [0, 400], [1, 0]);
+
   useEffect(() => {
-    getProducts().then(p => {
-      setProducts(p);
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    getProducts()
+      .then(p => {
+        setProducts(p);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   const Arrow = locale === 'ar' ? ArrowLeft : ArrowRight;
 
   const features = [
-    { icon: Stethoscope, title: t('features.quality'), desc: t('features.qualityDesc'), color: 'bg-teal-100 text-teal-600' },
-    { icon: Truck, title: t('features.shipping'), desc: t('features.shippingDesc'), color: 'bg-blue-100 text-blue-600' },
-    { icon: Headphones, title: t('features.support'), desc: t('features.supportDesc'), color: 'bg-purple-100 text-purple-600' },
-    { icon: ShieldCheck, title: t('features.payment'), desc: t('features.paymentDesc'), color: 'bg-green-100 text-green-600' }
+    {
+      icon: Stethoscope,
+      title: t('features.quality'),
+      desc: t('features.qualityDesc'),
+      color: 'from-teal-400 to-teal-600',
+      bg: 'bg-teal-50'
+    },
+    {
+      icon: Truck,
+      title: t('features.shipping'),
+      desc: t('features.shippingDesc'),
+      color: 'from-blue-400 to-blue-600',
+      bg: 'bg-blue-50'
+    },
+    {
+      icon: Headphones,
+      title: t('features.support'),
+      desc: t('features.supportDesc'),
+      color: 'from-purple-400 to-purple-600',
+      bg: 'bg-purple-50'
+    },
+    {
+      icon: ShieldCheck,
+      title: t('features.payment'),
+      desc: t('features.paymentDesc'),
+      color: 'from-green-400 to-green-600',
+      bg: 'bg-green-50'
+    }
   ];
 
   return (
-    <div>
-      <section className="bg-gradient-to-br from-navy-500 via-navy-700 to-navy-900 text-white py-20 px-4 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-10 w-40 h-40 border-4 border-white rounded-full"></div>
-          <div className="absolute bottom-10 right-10 w-60 h-60 border-4 border-teal-400 rounded-full"></div>
-        </div>
+    <div className="overflow-hidden">
+      {/* ============ HERO ============ */}
+      <section className="relative min-h-[90vh] flex items-center px-4 overflow-hidden">
+        <MedicalBackground />
 
-        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center relative">
-          <div>
-            <span className="inline-block bg-teal-500/20 border border-teal-400 text-teal-300 px-4 py-2 rounded-full text-sm font-semibold mb-6">
-              {t('hero.badge')}
-            </span>
-            <h1 className="text-4xl md:text-6xl font-black mb-6 leading-tight">
-              {t('hero.title')}
-            </h1>
-            <p className="text-xl text-gray-200 mb-8 leading-relaxed">
+        <motion.div
+          style={{ y: heroY, opacity: heroOpacity }}
+          className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center relative z-10 py-20"
+        >
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={staggerContainer}
+          >
+            <motion.div variants={fadeInUp}>
+              <motion.span
+                animate={heartbeat}
+                className="inline-flex items-center gap-2 bg-teal-500/20 backdrop-blur-sm border border-teal-400/50 text-teal-200 px-5 py-2 rounded-full text-sm font-semibold mb-6"
+              >
+                <Heart size={16} className="fill-teal-300 text-teal-300" />
+                {t('hero.badge')}
+              </motion.span>
+            </motion.div>
+
+            <motion.h1
+              variants={fadeInUp}
+              className="text-5xl md:text-7xl font-black mb-6 leading-tight text-white"
+            >
+              <span className="gradient-text">{t('hero.title')}</span>
+            </motion.h1>
+
+            <motion.p
+              variants={fadeInUp}
+              className="text-xl md:text-2xl text-gray-200 mb-8 leading-relaxed max-w-xl"
+            >
               {t('hero.subtitle')}
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <Link href={`/${locale}/products`} className="btn-primary text-lg">
-                {t('hero.cta')}
-                <Arrow size={20} />
-              </Link>
-              <a href="#features" className="border-2 border-white text-white hover:bg-white hover:text-navy-500 px-6 py-3 rounded-lg font-semibold transition-all">
+            </motion.p>
+
+            <motion.div variants={fadeInUp} className="flex flex-wrap gap-4">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link href={`/${locale}/products`} className="btn-primary text-lg">
+                  {t('hero.cta')}
+                  <Arrow size={20} />
+                </Link>
+              </motion.div>
+
+              <motion.a
+                href="#features"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="border-2 border-white/50 text-white hover:bg-white hover:text-navy-500 px-8 py-3 rounded-full font-semibold transition-all duration-300 backdrop-blur-sm"
+              >
                 {t('hero.secondary')}
-              </a>
-            </div>
-          </div>
+              </motion.a>
+            </motion.div>
 
-          <div className="hidden md:flex justify-center">
-            <div className="relative">
-              <div className="w-80 h-80 bg-teal-500/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-teal-400/30">
-                <Stethoscope size={200} className="text-teal-300" />
+            <motion.div
+              variants={fadeInUp}
+              className="flex items-center gap-6 mt-10 pt-8 border-t border-white/20"
+            >
+              <div>
+                <p className="text-3xl font-black text-white">5000+</p>
+                <p className="text-sm text-gray-300">
+                  {locale === 'ar' ? 'طالب طب' : 'Students'}
+                </p>
               </div>
+              <div className="w-px h-12 bg-white/20"></div>
+              <div>
+                <p className="text-3xl font-black text-white">4.9</p>
+                <p className="text-sm text-gray-300">
+                  {locale === 'ar' ? 'تقييم' : 'Rating'}
+                </p>
+              </div>
+              <div className="w-px h-12 bg-white/20"></div>
+              <div>
+                <p className="text-3xl font-black text-white">24/7</p>
+                <p className="text-sm text-gray-300">
+                  {locale === 'ar' ? 'دعم' : 'Support'}
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={fadeInRight}
+            className="hidden md:flex justify-center relative"
+          >
+            <div className="relative w-96 h-96">
+              <motion.div
+                className="absolute inset-0 rounded-full border-4 border-teal-400/30"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
+              >
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 bg-teal-400 rounded-full shadow-lg shadow-teal-400/50" />
+              </motion.div>
+
+              <motion.div
+                className="absolute inset-6 rounded-full border-4 border-dashed border-teal-400/20"
+                animate={{ rotate: -360 }}
+                transition={{ duration: 40, repeat: Infinity, ease: 'linear' }}
+              />
+
+              <motion.div
+                className="absolute inset-16 rounded-full bg-gradient-to-br from-teal-400/30 to-teal-600/30 backdrop-blur-md border-2 border-teal-400/50 flex items-center justify-center shadow-2xl glow-pulse"
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 3, repeat: Infinity }}
+              >
+                <motion.div
+                  animate={{ rotate: [0, 5, -5, 0] }}
+                  transition={{ duration: 4, repeat: Infinity }}
+                >
+                  <Stethoscope size={140} className="text-teal-300" strokeWidth={1.5} />
+                </motion.div>
+              </motion.div>
+
+              {[
+                { Icon: Heart, delay: 0, position: 'top-0 right-8', color: 'text-red-400' },
+                { Icon: Activity, delay: 1, position: 'bottom-8 left-0', color: 'text-blue-400' },
+                { Icon: Microscope, delay: 2, position: 'top-1/3 -left-8', color: 'text-purple-400' },
+                { Icon: Pill, delay: 1.5, position: 'bottom-0 right-12', color: 'text-green-400' },
+                { Icon: Syringe, delay: 0.7, position: 'top-1/4 -right-4', color: 'text-pink-400' }
+              ].map(({ Icon, delay, position, color }, i) => (
+                <motion.div
+                  key={i}
+                  className={`absolute ${position} w-14 h-14 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-xl`}
+                  animate={{ y: [0, -20, 0], scale: [1, 1.1, 1] }}
+                  transition={{ duration: 3, repeat: Infinity, delay }}
+                >
+                  <Icon size={24} className={color} />
+                </motion.div>
+              ))}
             </div>
+          </motion.div>
+        </motion.div>
+
+        <motion.div
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
+          animate={{ y: [0, 10, 0] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+        >
+          <div className="w-6 h-10 border-2 border-white/40 rounded-full flex items-start justify-center p-2">
+            <motion.div
+              className="w-1.5 h-1.5 bg-teal-400 rounded-full"
+              animate={{ y: [0, 12, 0] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            />
           </div>
+        </motion.div>
+      </section>
+
+      {/* ============ FEATURES ============ */}
+      <section id="features" className="relative py-24 px-4 bg-white overflow-hidden">
+        <div className="absolute inset-0 grid-bg opacity-40" />
+        <motion.div
+          className="absolute top-20 -right-20 w-96 h-96 bg-teal-100 rounded-full blur-3xl opacity-50"
+          animate={{ scale: [1, 1.2, 1] }}
+          transition={{ duration: 8, repeat: Infinity }}
+        />
+
+        <div className="max-w-7xl mx-auto relative">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+            className="text-center mb-16"
+          >
+            <motion.div variants={fadeInUp} className="flex items-center justify-center gap-3 mb-4">
+              <div className="h-1 w-12 bg-gradient-to-r from-transparent to-teal-500 rounded-full" />
+              <Heart className="text-teal-500 fill-teal-500" size={20} />
+              <div className="h-1 w-12 bg-gradient-to-l from-transparent to-teal-500 rounded-full" />
+            </motion.div>
+            <motion.h2
+              variants={fadeInUp}
+              className="text-4xl md:text-5xl font-black text-navy-700 mb-4"
+            >
+              {locale === 'ar' ? 'ليه Sovereign؟' : 'Why Sovereign?'}
+            </motion.h2>
+            <motion.p
+              variants={fadeInUp}
+              className="text-gray-600 text-lg max-w-2xl mx-auto"
+            >
+              {locale === 'ar'
+                ? 'مميزات حقيقية تخليك تختارنا عن غيرنا'
+                : 'Real features that make us your top choice'}
+            </motion.p>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+            className="grid grid-cols-2 md:grid-cols-4 gap-6"
+          >
+            {features.map((f, i) => (
+              <motion.div
+                key={i}
+                variants={staggerItem}
+                whileHover={{ y: -12, scale: 1.03 }}
+                transition={{ duration: 0.3 }}
+                className={`group relative p-8 rounded-3xl ${f.bg} border-2 border-transparent hover:border-teal-500/30 transition-all duration-500 overflow-hidden`}
+              >
+                <div className={`absolute inset-0 bg-gradient-to-br ${f.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
+
+                <motion.div
+                  className={`w-16 h-16 mx-auto mb-5 rounded-2xl bg-gradient-to-br ${f.color} flex items-center justify-center shadow-lg group-hover:shadow-2xl transition-all duration-500`}
+                  whileHover={{ rotate: [0, -10, 10, 0] }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <f.icon size={32} className="text-white" />
+                </motion.div>
+                <h3 className="font-bold text-navy-700 mb-2 text-center text-lg relative z-10">
+                  {f.title}
+                </h3>
+                <p className="text-sm text-gray-600 text-center relative z-10">
+                  {f.desc}
+                </p>
+              </motion.div>
+            ))}
+          </motion.div>
         </div>
       </section>
 
-      <section id="features" className="py-16 px-4 bg-white">
-        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6">
-          {features.map((f, i) => (
-            <div key={i} className="text-center p-6 rounded-xl hover:shadow-lg transition-shadow">
-              <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4 ${f.color}`}>
-                <f.icon size={28} />
-              </div>
-              <h3 className="font-bold text-navy-700 mb-2">{f.title}</h3>
-              <p className="text-sm text-gray-600">{f.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* ============ CATEGORIES ============ */}
+      <CategoriesSection />
 
-      <section className="py-16 px-4 bg-gray-50">
+      {/* ============ FEATURED PRODUCTS ============ */}
+      <section className="relative py-24 px-4 bg-gradient-to-b from-gray-50 to-white overflow-hidden">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-black text-navy-700 mb-3">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+            className="text-center mb-16"
+          >
+            <motion.div variants={fadeInUp} className="flex items-center justify-center gap-3 mb-4">
+              <div className="h-1 w-12 bg-gradient-to-r from-transparent to-navy-500 rounded-full" />
+              <Activity className="text-navy-500" size={20} />
+              <div className="h-1 w-12 bg-gradient-to-l from-transparent to-navy-500 rounded-full" />
+            </motion.div>
+            <motion.h2
+              variants={fadeInUp}
+              className="text-4xl md:text-5xl font-black text-navy-700 mb-4"
+            >
               {t('sections.featured')}
-            </h2>
-            <p className="text-gray-600">{t('sections.featuredDesc')}</p>
-          </div>
+            </motion.h2>
+            <motion.p
+              variants={fadeInUp}
+              className="text-gray-600 text-lg max-w-2xl mx-auto"
+            >
+              {t('sections.featuredDesc')}
+            </motion.p>
+          </motion.div>
 
           {loading ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="card animate-pulse h-80 bg-gray-200"></div>
+              {[...Array(8)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="h-80 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl"
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.1 }}
+                />
               ))}
             </div>
           ) : products.length === 0 ? (
-            <div className="text-center py-20 text-gray-500">
-              <p className="text-lg">لا توجد منتجات بعد — قم بإضافة منتجات من لوحة التحكم</p>
-            </div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center py-20"
+            >
+              <Package size={80} className="text-gray-300 mx-auto mb-4" />
+              <p className="text-lg text-gray-500">
+                {locale === 'ar' ? 'لا توجد منتجات بعد' : 'No products yet'}
+              </p>
+            </motion.div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {products.slice(0, 8).map(p => (
-                <ProductCard key={p.id} product={p} />
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: '-100px' }}
+              variants={staggerContainer}
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+            >
+              {products.slice(0, 8).map((p) => (
+                <motion.div key={p.id} variants={staggerItem}>
+                  <ProductCard product={p} />
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           )}
 
           {products.length > 0 && (
-            <div className="text-center mt-12">
-              <Link href={`/${locale}/products`} className="btn-outline">
-                {t('sections.allProducts')}
-                <Arrow size={20} />
-              </Link>
-            </div>
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+              className="text-center mt-16"
+            >
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link href={`/${locale}/products`} className="btn-outline text-lg">
+                  {t('sections.allProducts')}
+                  <Arrow size={20} />
+                </Link>
+              </motion.div>
+            </motion.div>
           )}
+        </div>
+      </section>
+
+      {/* ============ STATS ============ */}
+      <StatsSection />
+
+      {/* ============ BRAND STORY ============ */}
+      <BrandStorySection />
+
+      {/* ============ TESTIMONIALS ============ */}
+      <TestimonialsSection />
+
+      {/* ============ FAQ ============ */}
+      <FAQSection />
+
+      {/* ============ NEWSLETTER ============ */}
+      <NewsletterSection />
+
+      {/* ============ CTA ============ */}
+      <section className="relative py-24 px-4 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-teal-500 via-teal-600 to-navy-700" />
+        <div className="absolute inset-0 grid-bg opacity-20" />
+
+        {[...Array(3)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute border-2 border-white/20 rounded-full"
+            style={{
+              width: `${200 + i * 150}px`,
+              height: `${200 + i * 150}px`,
+              top: '50%',
+              left: '50%',
+              x: '-50%',
+              y: '-50%'
+            }}
+            animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.6, 0.3] }}
+            transition={{ duration: 4, repeat: Infinity, delay: i * 0.5 }}
+          />
+        ))}
+
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            className="inline-block mb-6"
+          >
+            <motion.div
+              animate={heartbeat}
+              className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mx-auto border border-white/30"
+            >
+              <Heart size={40} className="text-white fill-white" />
+            </motion.div>
+          </motion.div>
+
+          <motion.h2
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="text-4xl md:text-5xl font-black text-white mb-6"
+          >
+            {locale === 'ar'
+              ? 'ابدأ رحلتك الطبية معنا'
+              : 'Start Your Medical Journey With Us'}
+          </motion.h2>
+
+          <motion.p
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="text-white/90 text-lg mb-10 max-w-2xl mx-auto"
+          >
+            {locale === 'ar'
+              ? 'جودة عالية، شحن سريع، وأسعار تناسب طلاب الطب'
+              : 'Premium quality, fast shipping, and prices that fit medical students'}
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.3 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="inline-block"
+          >
+            <Link
+              href={`/${locale}/products`}
+              className="bg-white text-teal-600 hover:bg-gray-100 px-10 py-4 rounded-full font-bold text-lg transition-all duration-300 shadow-2xl inline-flex items-center gap-3"
+            >
+              {t('hero.cta')}
+              <Arrow size={22} />
+            </Link>
+          </motion.div>
         </div>
       </section>
     </div>

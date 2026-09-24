@@ -7,6 +7,8 @@ import { CartProvider } from '@/components/CartProvider';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import WhatsAppButton from '@/components/WhatsAppButton';
+import MedicalLoader from '@/components/MedicalLoader';
+import AnnouncementBar from '@/components/AnnouncementBar';
 import { Toaster } from 'react-hot-toast';
 
 export function generateStaticParams() {
@@ -30,6 +32,7 @@ export default async function LocaleLayout({
         <NextIntlClientProvider messages={messages}>
           <AuthProvider>
             <CartProvider>
+              <MedicalLoader />
               <Navbar />
               <main className="flex-1">{children}</main>
               <Footer />

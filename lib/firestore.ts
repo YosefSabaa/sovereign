@@ -1,6 +1,6 @@
 import {
   collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
-  query, where, orderBy, limit, serverTimestamp, Timestamp
+  query, where, limit, serverTimestamp, Timestamp
 } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -61,10 +61,51 @@ export type Review = {
   createdAt?: Timestamp;
 };
 
+// ==================== HELPERS ====================
+
+/**
+ * ✅ دالة تنظيف - تشيل الحقول الفاضية (undefined) لأن Firestore ما بيقبلهاش
+ */
+const cleanUndefined = (obj: any): any => {
+  if (Array.isArray(obj)) {
+    return obj.map(cleanUndefined);
+  }
+
+  if (obj && typeof obj === 'object') {
+    // لو Timestamp من Firebase، رجعه زي ما هو
+    if (obj?.toMillis || obj?.seconds !== undefined) {
+      return obj;
+    }
+
+    const cleaned: any = {};
+    Object.entries(obj).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        cleaned[key] = cleanUndefined(value);
+      }
+    });
+    return cleaned;
+  }
+
+  return obj;
+};
+
+/**
+ * ✅ ترتيب تنازلي حسب التاريخ (في الـ client)
+ */
+const sortByDateDesc = <T extends { createdAt?: Timestamp }>(arr: T[]): T[] => {
+  return arr.sort((a, b) => {
+    const aTime = a.createdAt?.toMillis?.() || 0;
+    const bTime = b.createdAt?.toMillis?.() || 0;
+    return bTime - aTime;
+  });
+};
+
+// ==================== PRODUCTS ====================
+
 export const getProducts = async (): Promise<Product[]> => {
-  const q = query(collection(db, 'products'), orderBy('createdAt', 'desc'));
-  const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() } as Product));
+  const snap = await getDocs(collection(db, 'products'));
+  const products = snap.docs.map(d => ({ id: d.id, ...d.data() } as Product));
+  return sortByDateDesc(products);
 };
 
 export const getProduct = async (id: string): Promise<Product | null> => {
@@ -74,52 +115,63 @@ export const getProduct = async (id: string): Promise<Product | null> => {
 };
 
 export const addProduct = async (p: Omit<Product, 'id'>) => {
-  return addDoc(collection(db, 'products'), { ...p, createdAt: serverTimestamp() });
+  return addDoc(collection(db, 'products'), {
+    ...cleanUndefined(p),
+    createdAt: serverTimestamp()
+  });
 };
 
 export const updateProduct = async (id: string, data: Partial<Product>) => {
-  return updateDoc(doc(db, 'products', id), data);
+  return updateDoc(doc(db, 'products', id), cleanUndefined(data));
 };
 
 export const deleteProduct = async (id: string) => {
   return deleteDoc(doc(db, 'products', id));
 };
 
+// ==================== ORDERS ====================
+
 export const createOrder = async (o: Omit<Order, 'id'>) => {
-  return addDoc(collection(db, 'orders'), { ...o, createdAt: serverTimestamp() });
+  return addDoc(collection(db, 'orders'), {
+    ...cleanUndefined(o),
+    createdAt: serverTimestamp()
+  });
 };
 
 export const getUserOrders = async (userId: string): Promise<Order[]> => {
   const q = query(
     collection(db, 'orders'),
-    where('userId', '==', userId),
-    orderBy('createdAt', 'desc')
+    where('userId', '==', userId)
   );
   const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() } as Order));
+  const orders = snap.docs.map(d => ({ id: d.id, ...d.data() } as Order));
+  return sortByDateDesc(orders);
 };
 
 export const getAllOrders = async (): Promise<Order[]> => {
-  const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'), limit(200));
-  const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() } as Order));
+  const snap = await getDocs(collection(db, 'orders'));
+  const orders = snap.docs.map(d => ({ id: d.id, ...d.data() } as Order));
+  return sortByDateDesc(orders).slice(0, 200);
 };
 
 export const updateOrderStatus = async (id: string, status: Order['status']) => {
   return updateDoc(doc(db, 'orders', id), { status });
 };
 
+// ==================== COUPONS ====================
+
 export const getCoupon = async (code: string): Promise<Coupon | null> => {
   const q = query(
     collection(db, 'coupons'),
     where('code', '==', code.toUpperCase()),
-    where('active', '==', true),
     limit(1)
   );
   const snap = await getDocs(q);
   if (snap.empty) return null;
   const d = snap.docs[0];
-  return { id: d.id, ...d.data() } as Coupon;
+  const coupon = { id: d.id, ...d.data() } as Coupon;
+  if (!coupon.active) return null;
+  return coupon;
 };
 
 export const getAllCoupons = async (): Promise<Coupon[]> => {
@@ -128,21 +180,31 @@ export const getAllCoupons = async (): Promise<Coupon[]> => {
 };
 
 export const addCoupon = async (c: Omit<Coupon, 'id'>) => {
-  return addDoc(collection(db, 'coupons'), { ...c, code: c.code.toUpperCase() });
+  return addDoc(collection(db, 'coupons'), {
+    ...cleanUndefined(c),
+    code: c.code.toUpperCase()
+  });
 };
 
-export const deleteCoupon = async (id: string) => deleteDoc(doc(db, 'coupons', id));
+export const deleteCoupon = async (id: string) => {
+  return deleteDoc(doc(db, 'coupons', id));
+};
+
+// ==================== REVIEWS ====================
 
 export const getProductReviews = async (productId: string): Promise<Review[]> => {
   const q = query(
     collection(db, 'reviews'),
-    where('productId', '==', productId),
-    orderBy('createdAt', 'desc')
+    where('productId', '==', productId)
   );
   const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() } as Review));
+  const reviews = snap.docs.map(d => ({ id: d.id, ...d.data() } as Review));
+  return sortByDateDesc(reviews);
 };
 
 export const addReview = async (r: Omit<Review, 'id'>) => {
-  return addDoc(collection(db, 'reviews'), { ...r, createdAt: serverTimestamp() });
+  return addDoc(collection(db, 'reviews'), {
+    ...cleanUndefined(r),
+    createdAt: serverTimestamp()
+  });
 };
