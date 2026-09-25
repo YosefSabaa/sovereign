@@ -12,7 +12,6 @@ import CategoriesSection from '@/components/CategoriesSection';
 import StatsSection from '@/components/StatsSection';
 import TestimonialsSection from '@/components/TestimonialsSection';
 import FAQSection from '@/components/FAQSection';
-import NewsletterSection from '@/components/NewsletterSection';
 import BrandStorySection from '@/components/BrandStorySection';
 import {
   Stethoscope, Truck, Headphones, ShieldCheck, ArrowLeft, ArrowRight,
@@ -610,9 +609,6 @@ export default function HomePage() {
 
       {/* ============ FAQ ============ */}
       <FAQSection />
-
-      {/* ============ NEWSLETTER ============ */}
-      <NewsletterSection />
 
       {/* ============ CTA ============ */}
       <section className="relative py-24 px-4 overflow-hidden">

@@ -322,8 +322,8 @@ export default function AdminThemePage() {
               </p>
               <p className="text-xs" style={{ color: draft.textSecondary }}>
                 {locale === 'ar'
-                  ? 'رفيقك في الطب'
-                  : 'Your medical companion'}
+                  ? 'جودة ممتازة. مصنوعة بشكل جميل مع تفاصيل مدروسة لرفع مستوى شعورك وحركتك'
+                  : 'Premium Quality. Beautifully crafted with thoughtful details to elevate the way you feel and move.'}
               </p>
             </div>
           </div>
