@@ -1,8 +1,20 @@
 import {
   collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
-  query, where, limit, serverTimestamp, Timestamp
+  query, where, limit, serverTimestamp, Timestamp, increment
 } from 'firebase/firestore';
 import { db } from './firebase';
+
+// ==================== TYPES ====================
+
+export type ProductVariant = {
+  id: string;
+  name: string;
+  type: 'size' | 'color' | 'other';
+  priceAdjustment?: number;
+  stock: number;
+  image?: string;
+  hexColor?: string; // ⬅️ للألوان (مثال: #FF0000)
+};
 
 export type Product = {
   id?: string;
@@ -13,6 +25,13 @@ export type Product = {
   price: number;
   oldPrice?: number;
   image: string;
+  images?: string[];
+  variants?: ProductVariant[];
+  flashSale?: {
+    enabled: boolean;
+    discountPercent: number;
+    endsAt: Timestamp;
+  };
   category: string;
   stock: number;
   rating?: number;
@@ -26,6 +45,8 @@ export type CartItem = {
   price: number;
   image: string;
   qty: number;
+  variantId?: string;
+  variantName?: string;
 };
 
 export type Order = {
@@ -41,6 +62,12 @@ export type Order = {
   couponCode?: string;
   receiptUrl: string;
   status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
+  timeline?: Array<{
+    status: Order['status'];
+    note?: string;
+    timestamp: Timestamp;
+  }>;
+  trackingNumber?: string;
   createdAt?: Timestamp;
 };
 
@@ -49,6 +76,10 @@ export type Coupon = {
   code: string;
   discountPercent: number;
   active: boolean;
+  minOrder?: number;
+  expiresAt?: Timestamp;
+  usageLimit?: number;
+  usageCount?: number;
 };
 
 export type Review = {
@@ -58,25 +89,23 @@ export type Review = {
   userName: string;
   rating: number;
   comment: string;
+  images?: string[];
+  createdAt?: Timestamp;
+};
+
+export type WishlistItem = {
+  id?: string;
+  userId: string;
+  productId: string;
   createdAt?: Timestamp;
 };
 
 // ==================== HELPERS ====================
 
-/**
- * ✅ دالة تنظيف - تشيل الحقول الفاضية (undefined) لأن Firestore ما بيقبلهاش
- */
 const cleanUndefined = (obj: any): any => {
-  if (Array.isArray(obj)) {
-    return obj.map(cleanUndefined);
-  }
-
+  if (Array.isArray(obj)) return obj.map(cleanUndefined);
   if (obj && typeof obj === 'object') {
-    // لو Timestamp من Firebase، رجعه زي ما هو
-    if (obj?.toMillis || obj?.seconds !== undefined) {
-      return obj;
-    }
-
+    if (obj?.toMillis || obj?.seconds !== undefined) return obj;
     const cleaned: any = {};
     Object.entries(obj).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
@@ -85,13 +114,9 @@ const cleanUndefined = (obj: any): any => {
     });
     return cleaned;
   }
-
   return obj;
 };
 
-/**
- * ✅ ترتيب تنازلي حسب التاريخ (في الـ client)
- */
 const sortByDateDesc = <T extends { createdAt?: Timestamp }>(arr: T[]): T[] => {
   return arr.sort((a, b) => {
     const aTime = a.createdAt?.toMillis?.() || 0;
@@ -104,7 +129,7 @@ const sortByDateDesc = <T extends { createdAt?: Timestamp }>(arr: T[]): T[] => {
 
 export const getProducts = async (): Promise<Product[]> => {
   const snap = await getDocs(collection(db, 'products'));
-  const products = snap.docs.map(d => ({ id: d.id, ...d.data() } as Product));
+  const products = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Product));
   return sortByDateDesc(products);
 };
 
@@ -112,6 +137,17 @@ export const getProduct = async (id: string): Promise<Product | null> => {
   const ref = doc(db, 'products', id);
   const snap = await getDoc(ref);
   return snap.exists() ? ({ id: snap.id, ...snap.data() } as Product) : null;
+};
+
+export const getProductsByCategory = async (
+  category: string
+): Promise<Product[]> => {
+  const q = query(
+    collection(db, 'products'),
+    where('category', '==', category)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Product));
 };
 
 export const addProduct = async (p: Omit<Product, 'id'>) => {
@@ -129,33 +165,85 @@ export const deleteProduct = async (id: string) => {
   return deleteDoc(doc(db, 'products', id));
 };
 
+export const decrementStock = async (
+  productId: string,
+  qty: number,
+  variantId?: string
+) => {
+  const ref = doc(db, 'products', productId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return;
+
+  const product = snap.data() as Product;
+
+  if (variantId && product.variants) {
+    const updatedVariants = product.variants.map((v) =>
+      v.id === variantId ? { ...v, stock: Math.max(0, v.stock - qty) } : v
+    );
+    const newStock = updatedVariants.reduce((sum, v) => sum + v.stock, 0);
+    await updateDoc(ref, { variants: updatedVariants, stock: newStock });
+  } else {
+    await updateDoc(ref, {
+      stock: Math.max(0, (product.stock || 0) - qty)
+    });
+  }
+};
+
 // ==================== ORDERS ====================
 
 export const createOrder = async (o: Omit<Order, 'id'>) => {
+  const initialTimeline = [
+    {
+      status: 'pending' as const,
+      note: 'Order placed',
+      timestamp: Timestamp.now()
+    }
+  ];
+
+  for (const item of o.items) {
+    await decrementStock(item.productId, item.qty, item.variantId);
+  }
+
   return addDoc(collection(db, 'orders'), {
     ...cleanUndefined(o),
+    timeline: initialTimeline,
     createdAt: serverTimestamp()
   });
 };
 
 export const getUserOrders = async (userId: string): Promise<Order[]> => {
-  const q = query(
-    collection(db, 'orders'),
-    where('userId', '==', userId)
-  );
+  const q = query(collection(db, 'orders'), where('userId', '==', userId));
   const snap = await getDocs(q);
-  const orders = snap.docs.map(d => ({ id: d.id, ...d.data() } as Order));
+  const orders = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Order));
   return sortByDateDesc(orders);
 };
 
 export const getAllOrders = async (): Promise<Order[]> => {
   const snap = await getDocs(collection(db, 'orders'));
-  const orders = snap.docs.map(d => ({ id: d.id, ...d.data() } as Order));
+  const orders = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Order));
   return sortByDateDesc(orders).slice(0, 200);
 };
 
-export const updateOrderStatus = async (id: string, status: Order['status']) => {
-  return updateDoc(doc(db, 'orders', id), { status });
+export const updateOrderStatus = async (
+  id: string,
+  status: Order['status'],
+  note?: string
+) => {
+  const ref = doc(db, 'orders', id);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return;
+
+  const order = snap.data() as Order;
+  const newTimeline = [
+    ...(order.timeline || []),
+    {
+      status,
+      note: note || '',
+      timestamp: Timestamp.now()
+    }
+  ];
+
+  return updateDoc(ref, { status, timeline: newTimeline });
 };
 
 // ==================== COUPONS ====================
@@ -170,24 +258,43 @@ export const getCoupon = async (code: string): Promise<Coupon | null> => {
   if (snap.empty) return null;
   const d = snap.docs[0];
   const coupon = { id: d.id, ...d.data() } as Coupon;
+
   if (!coupon.active) return null;
+
+  if (coupon.expiresAt) {
+    const now = Date.now();
+    const expiry = coupon.expiresAt.toMillis?.() || 0;
+    if (now > expiry) return null;
+  }
+
+  if (coupon.usageLimit && coupon.usageCount) {
+    if (coupon.usageCount >= coupon.usageLimit) return null;
+  }
+
   return coupon;
 };
 
 export const getAllCoupons = async (): Promise<Coupon[]> => {
   const snap = await getDocs(collection(db, 'coupons'));
-  return snap.docs.map(d => ({ id: d.id, ...d.data() } as Coupon));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Coupon));
 };
 
 export const addCoupon = async (c: Omit<Coupon, 'id'>) => {
   return addDoc(collection(db, 'coupons'), {
     ...cleanUndefined(c),
-    code: c.code.toUpperCase()
+    code: c.code.toUpperCase(),
+    usageCount: 0
   });
 };
 
 export const deleteCoupon = async (id: string) => {
   return deleteDoc(doc(db, 'coupons', id));
+};
+
+export const incrementCouponUsage = async (id: string) => {
+  return updateDoc(doc(db, 'coupons', id), {
+    usageCount: increment(1)
+  });
 };
 
 // ==================== REVIEWS ====================
@@ -198,7 +305,7 @@ export const getProductReviews = async (productId: string): Promise<Review[]> =>
     where('productId', '==', productId)
   );
   const snap = await getDocs(q);
-  const reviews = snap.docs.map(d => ({ id: d.id, ...d.data() } as Review));
+  const reviews = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Review));
   return sortByDateDesc(reviews);
 };
 
@@ -207,4 +314,74 @@ export const addReview = async (r: Omit<Review, 'id'>) => {
     ...cleanUndefined(r),
     createdAt: serverTimestamp()
   });
+};
+
+// ==================== WISHLIST ====================
+
+export const getWishlist = async (userId: string): Promise<WishlistItem[]> => {
+  const q = query(collection(db, 'wishlist'), where('userId', '==', userId));
+  const snap = await getDocs(q);
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as WishlistItem));
+};
+
+export const toggleWishlist = async (
+  userId: string,
+  productId: string
+): Promise<boolean> => {
+  const q = query(
+    collection(db, 'wishlist'),
+    where('userId', '==', userId),
+    where('productId', '==', productId),
+    limit(1)
+  );
+  const snap = await getDocs(q);
+
+  if (!snap.empty) {
+    await deleteDoc(doc(db, 'wishlist', snap.docs[0].id));
+    return false;
+  } else {
+    await addDoc(collection(db, 'wishlist'), {
+      userId,
+      productId,
+      createdAt: serverTimestamp()
+    });
+    return true;
+  }
+};
+
+export const isInWishlist = async (
+  userId: string,
+  productId: string
+): Promise<boolean> => {
+  const q = query(
+    collection(db, 'wishlist'),
+    where('userId', '==', userId),
+    where('productId', '==', productId),
+    limit(1)
+  );
+  const snap = await getDocs(q);
+  return !snap.empty;
+};
+
+// ==================== RELATED PRODUCTS ====================
+
+export const getRelatedProducts = async (
+  category: string,
+  excludeId: string,
+  limitCount: number = 4
+): Promise<Product[]> => {
+  try {
+    const q = query(
+      collection(db, 'products'),
+      where('category', '==', category)
+    );
+    const snap = await getDocs(q);
+    const products = snap.docs
+      .map((d) => ({ id: d.id, ...d.data() } as Product))
+      .filter((p) => p.id !== excludeId)
+      .slice(0, limitCount);
+    return products;
+  } catch {
+    return [];
+  }
 };

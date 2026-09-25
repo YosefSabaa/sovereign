@@ -4,11 +4,12 @@
     "products": "Products",
     "orders": "My Orders",
     "cart": "Cart",
+    "wishlist": "Wishlist",
+    "account": "Account",
     "login": "Login",
     "register": "Register",
     "logout": "Logout",
-    "admin": "Admin",
-    "account": "Account"
+    "admin": "Admin"
   },
   "hero": {
     "title": "Sovereign - Your Medical Companion",
@@ -119,6 +120,7 @@
     "products": "Products",
     "orders": "Orders",
     "coupons": "Coupons",
+    "theme": "Theme",
     "addProduct": "Add Product",
     "editProduct": "Edit Product",
     "addCoupon": "Add Coupon",

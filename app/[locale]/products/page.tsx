@@ -8,8 +8,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getProducts, Product } from '@/lib/firestore';
 import ProductCard from '@/components/ProductCard';
 import PageTransition from '@/components/PageTransition';
-import { Search, Stethoscope, X, Filter, Package } from 'lucide-react';
-import { staggerContainer, staggerItem, fadeInUp } from '@/lib/animations';
+import AdvancedFilters, {
+  FilterState
+} from '@/components/AdvancedFilters';
+import { Search, Stethoscope, X, Package } from 'lucide-react';
+import {
+  staggerContainer, staggerItem, fadeInUp
+} from '@/lib/animations';
 
 function ProductsContent() {
   const t = useTranslations();
@@ -21,11 +26,26 @@ function ProductsContent() {
   const [filtered, setFiltered] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('all');
+
+  const [filters, setFilters] = useState<FilterState>({
+    category: 'all',
+    minPrice: 0,
+    maxPrice: 100000,
+    minRating: 0,
+    inStock: false,
+    sortBy: 'newest'
+  });
+
+  const maxPrice =
+    products.length > 0
+      ? Math.max(...products.map((p) => p.price), 1000)
+      : 10000;
 
   useEffect(() => {
     const urlCategory = searchParams.get('category');
-    if (urlCategory) setCategory(urlCategory);
+    if (urlCategory) {
+      setFilters((f) => ({ ...f, category: urlCategory }));
+    }
   }, [searchParams]);
 
   useEffect(() => {
@@ -33,13 +53,15 @@ function ProductsContent() {
       .then((p) => {
         setProducts(p);
         setFiltered(p);
+        setFilters((f) => ({ ...f, maxPrice: Math.max(...p.map(x => x.price), 1000) }));
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, []);
 
   useEffect(() => {
-    let result = products;
+    let result = [...products];
+
     if (search.trim()) {
       const q = search.toLowerCase().trim();
       result = result.filter(
@@ -49,37 +71,55 @@ function ProductsContent() {
           p.category.toLowerCase().includes(q)
       );
     }
-    if (category !== 'all') {
+
+    if (filters.category !== 'all') {
       result = result.filter(
-        (p) => p.category.toLowerCase() === category.toLowerCase()
+        (p) => p.category.toLowerCase() === filters.category.toLowerCase()
       );
     }
+
+    result = result.filter(
+      (p) => p.price >= filters.minPrice && p.price <= filters.maxPrice
+    );
+
+    if (filters.minRating > 0) {
+      result = result.filter((p) => (p.rating || 0) >= filters.minRating);
+    }
+
+    if (filters.inStock) {
+      result = result.filter((p) => p.stock > 0);
+    }
+
+    switch (filters.sortBy) {
+      case 'price-asc':
+        result.sort((a, b) => a.price - b.price);
+        break;
+      case 'price-desc':
+        result.sort((a, b) => b.price - a.price);
+        break;
+      case 'rating':
+        result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        break;
+    }
+
     setFiltered(result);
-  }, [search, category, products]);
+  }, [search, filters, products]);
 
   const categories = [
     'all',
     ...Array.from(new Set(products.map((p) => p.category)))
   ];
 
-  const handleCategoryChange = (newCategory: string) => {
-    setCategory(newCategory);
-    const params = new URLSearchParams(searchParams.toString());
-    if (newCategory === 'all') {
-      params.delete('category');
-    } else {
-      params.set('category', newCategory);
-    }
-    const qs = params.toString();
-    router.push(
-      `/${locale}/products${qs ? `?${qs}` : ''}`,
-      { scroll: false }
-    );
-  };
-
   const clearAll = () => {
     setSearch('');
-    setCategory('all');
+    setFilters({
+      category: 'all',
+      minPrice: 0,
+      maxPrice,
+      minRating: 0,
+      inStock: false,
+      sortBy: 'newest'
+    });
     router.push(`/${locale}/products`, { scroll: false });
   };
 
@@ -89,7 +129,6 @@ function ProductsContent() {
         className="relative min-h-screen overflow-hidden"
         style={{ background: 'var(--color-bg-base)' }}
       >
-        {/* Decorative orbs */}
         <div className="absolute inset-0 pointer-events-none">
           <div
             className="absolute top-20 -right-20 w-96 h-96 rounded-full blur-3xl opacity-10"
@@ -102,7 +141,6 @@ function ProductsContent() {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 py-12 relative">
-          {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -151,14 +189,12 @@ function ProductsContent() {
             </p>
           </motion.div>
 
-          {/* Filters */}
           <motion.div
             initial="hidden"
             animate="visible"
             variants={staggerContainer}
-            className="mb-10"
+            className="mb-6"
           >
-            {/* Search */}
             <motion.div variants={fadeInUp} className="mb-6">
               <div className="relative max-w-2xl mx-auto">
                 <Search
@@ -200,36 +236,25 @@ function ProductsContent() {
               </div>
             </motion.div>
 
-            {/* Category filter */}
+            {/* Categories quick filter */}
             <motion.div
               variants={fadeInUp}
-              className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide"
+              className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide mb-3"
             >
-              <div
-                className="flex items-center gap-2 font-bold flex-shrink-0"
-                style={{ color: 'var(--color-text-primary)' }}
-              >
-                <Filter
-                  size={18}
-                  style={{ color: 'var(--color-secondary-500)' }}
-                />
-                <span className="hidden md:inline">
-                  {locale === 'ar' ? 'التصنيف:' : 'Filter:'}
-                </span>
-              </div>
               {categories.map((c) => (
                 <motion.button
                   key={c}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => handleCategoryChange(c)}
+                  onClick={() =>
+                    setFilters((f) => ({ ...f, category: c }))
+                  }
                   className="px-5 py-2.5 rounded-full font-bold whitespace-nowrap transition-all duration-300"
                   style={
-                    category.toLowerCase() === c.toLowerCase()
+                    filters.category.toLowerCase() === c.toLowerCase()
                       ? {
                           background: `linear-gradient(to right, var(--color-secondary-500), var(--color-secondary-600))`,
                           color: '#0a1828',
-                          boxShadow: '0 10px 25px -5px var(--color-secondary-500)',
                           border: '2px solid transparent'
                         }
                       : {
@@ -248,43 +273,15 @@ function ProductsContent() {
               ))}
             </motion.div>
 
-            {/* Active filter chip */}
-            <AnimatePresence>
-              {category !== 'all' && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="mt-4 flex items-center gap-2"
-                >
-                  <span
-                    className="text-sm"
-                    style={{ color: 'var(--color-text-muted)' }}
-                  >
-                    {locale === 'ar' ? 'تصفية بـ:' : 'Filtering by:'}
-                  </span>
-                  <span
-                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-bold"
-                    style={{
-                      background: 'rgba(212, 175, 55, 0.15)',
-                      color: 'var(--color-secondary-500)',
-                      border: '1px solid rgba(212, 175, 55, 0.3)'
-                    }}
-                  >
-                    {category}
-                    <button
-                      onClick={() => handleCategoryChange('all')}
-                      className="rounded-full p-0.5 hover:opacity-70"
-                    >
-                      <X size={14} />
-                    </button>
-                  </span>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {/* Advanced filters */}
+            <AdvancedFilters
+              filters={filters}
+              onChange={setFilters}
+              categories={categories.filter((c) => c !== 'all')}
+              maxPrice={maxPrice}
+            />
           </motion.div>
 
-          {/* Count */}
           {!loading && (
             <motion.p
               initial={{ opacity: 0 }}
@@ -298,7 +295,6 @@ function ProductsContent() {
             </motion.p>
           )}
 
-          {/* Products */}
           {loading ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {[...Array(8)].map((_, i) => (

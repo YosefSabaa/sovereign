@@ -13,52 +13,122 @@ import {
   Package, ShoppingBag, Clock, CheckCircle2, Truck, Home,
   XCircle, ChevronDown, Receipt
 } from 'lucide-react';
-import {
-  staggerContainer, staggerItem, heartbeat
-} from '@/lib/animations';
+import { staggerContainer, staggerItem, heartbeat } from '@/lib/animations';
 
 const STATUS_CONFIG: any = {
-  pending: {
-    icon: Clock,
-    ar: 'قيد المراجعة',
-    en: 'Pending',
-    color: '#eab308',
-    bg: 'rgba(234, 179, 8, 0.15)',
-    border: 'rgba(234, 179, 8, 0.3)'
-  },
-  confirmed: {
-    icon: CheckCircle2,
-    ar: 'تم التأكيد',
-    en: 'Confirmed',
-    color: '#3b82f6',
-    bg: 'rgba(59, 130, 246, 0.15)',
-    border: 'rgba(59, 130, 246, 0.3)'
-  },
-  shipped: {
-    icon: Truck,
-    ar: 'تم الشحن',
-    en: 'Shipped',
-    color: '#8b5cf6',
-    bg: 'rgba(139, 92, 246, 0.15)',
-    border: 'rgba(139, 92, 246, 0.3)'
-  },
-  delivered: {
-    icon: Home,
-    ar: 'تم التسليم',
-    en: 'Delivered',
-    color: '#10b981',
-    bg: 'rgba(16, 185, 129, 0.15)',
-    border: 'rgba(16, 185, 129, 0.3)'
-  },
-  cancelled: {
-    icon: XCircle,
-    ar: 'ملغي',
-    en: 'Cancelled',
-    color: '#ef4444',
-    bg: 'rgba(239, 68, 68, 0.15)',
-    border: 'rgba(239, 68, 68, 0.3)'
-  }
+  pending: { ar: 'قيد المراجعة', en: 'Pending', color: '#eab308' },
+  confirmed: { ar: 'تم التأكيد', en: 'Confirmed', color: '#3b82f6' },
+  shipped: { ar: 'تم الشحن', en: 'Shipped', color: '#8b5cf6' },
+  delivered: { ar: 'تم التسليم', en: 'Delivered', color: '#10b981' },
+  cancelled: { ar: 'ملغي', en: 'Cancelled', color: '#ef4444' }
 };
+
+const TIMELINE_STEPS: Array<{
+  status: Order['status'];
+  icon: any;
+  ar: string;
+  en: string;
+}> = [
+  { status: 'pending', icon: Clock, ar: 'تم الطلب', en: 'Order Placed' },
+  { status: 'confirmed', icon: CheckCircle2, ar: 'تم التأكيد', en: 'Confirmed' },
+  { status: 'shipped', icon: Truck, ar: 'تم الشحن', en: 'Shipped' },
+  { status: 'delivered', icon: Home, ar: 'تم التسليم', en: 'Delivered' }
+];
+
+function OrderTimeline({
+  order,
+  locale
+}: {
+  order: Order;
+  locale: string;
+}) {
+  const currentIndex = TIMELINE_STEPS.findIndex(
+    (s) => s.status === order.status
+  );
+
+  if (order.status === 'cancelled') {
+    return (
+      <div
+        className="rounded-xl p-4 flex items-center gap-3"
+        style={{
+          background: 'rgba(239, 68, 68, 0.1)',
+          border: '1px solid rgba(239, 68, 68, 0.3)'
+        }}
+      >
+        <XCircle size={24} style={{ color: '#ef4444' }} />
+        <span className="font-bold" style={{ color: '#ef4444' }}>
+          {locale === 'ar' ? 'تم إلغاء الطلب' : 'Order Cancelled'}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="py-4">
+      <div className="relative flex justify-between items-start">
+        <div
+          className="absolute top-5 left-5 right-5 h-1 rounded-full"
+          style={{ background: 'var(--color-bg-elevated)' }}
+        >
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{
+              width: `${(currentIndex / (TIMELINE_STEPS.length - 1)) * 100}%`
+            }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="h-full rounded-full"
+            style={{
+              background: `linear-gradient(to right, var(--color-secondary-500), var(--color-secondary-400))`
+            }}
+          />
+        </div>
+
+        {TIMELINE_STEPS.map((step, i) => {
+          const Icon = step.icon;
+          const isActive = i <= currentIndex;
+          const isCurrent = i === currentIndex;
+
+          return (
+            <div
+              key={step.status}
+              className="relative z-10 flex flex-col items-center gap-2 flex-1"
+            >
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: i * 0.15 }}
+                className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg ${
+                  isCurrent ? 'animate-pulse' : ''
+                }`}
+                style={{
+                  background: isActive
+                    ? `linear-gradient(to bottom right, var(--color-secondary-500), var(--color-secondary-600))`
+                    : 'var(--color-bg-elevated)',
+                  color: isActive ? '#0a1828' : 'var(--color-text-muted)',
+                  border: isActive
+                    ? 'none'
+                    : '2px solid rgba(212, 175, 55, 0.2)'
+                }}
+              >
+                <Icon size={18} />
+              </motion.div>
+              <span
+                className="text-xs font-bold text-center"
+                style={{
+                  color: isActive
+                    ? 'var(--color-text-primary)'
+                    : 'var(--color-text-muted)'
+                }}
+              >
+                {locale === 'ar' ? step.ar : step.en}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export default function OrdersPage() {
   const locale = useLocale();
@@ -80,7 +150,6 @@ export default function OrdersPage() {
       .finally(() => setLoading(false));
   }, [user, authLoading]);
 
-  // LOADING
   if (authLoading || loading) {
     return (
       <div
@@ -89,32 +158,17 @@ export default function OrdersPage() {
       >
         <div className="max-w-5xl mx-auto space-y-4">
           {[...Array(3)].map((_, i) => (
-            <motion.div
+            <div
               key={i}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              className="rounded-2xl p-6"
+              className="h-32 rounded-2xl animate-pulse"
               style={{ background: 'var(--color-bg-card)' }}
-            >
-              <div className="animate-pulse space-y-3">
-                <div
-                  className="h-6 rounded w-1/3"
-                  style={{ background: 'var(--color-bg-elevated)' }}
-                />
-                <div
-                  className="h-4 rounded w-1/2"
-                  style={{ background: 'var(--color-bg-elevated)' }}
-                />
-              </div>
-            </motion.div>
+            />
           ))}
         </div>
       </div>
     );
   }
 
-  // NOT LOGGED IN
   if (!user) {
     return (
       <div
@@ -137,7 +191,6 @@ export default function OrdersPage() {
     );
   }
 
-  // EMPTY
   if (orders.length === 0) {
     return (
       <PageTransition>
@@ -145,17 +198,6 @@ export default function OrdersPage() {
           className="min-h-[80vh] flex items-center justify-center px-4 relative overflow-hidden"
           style={{ background: 'var(--color-bg-base)' }}
         >
-          <div className="absolute inset-0 pointer-events-none">
-            <div
-              className="absolute top-20 left-20 w-64 h-64 rounded-full blur-3xl opacity-20"
-              style={{ background: 'var(--color-secondary-500)' }}
-            />
-            <div
-              className="absolute bottom-20 right-20 w-64 h-64 rounded-full blur-3xl opacity-20"
-              style={{ background: 'var(--color-primary-500)' }}
-            />
-          </div>
-
           <motion.div
             initial="hidden"
             animate="visible"
@@ -195,16 +237,6 @@ export default function OrdersPage() {
               {t('orders.empty')}
             </motion.h1>
 
-            <motion.p
-              variants={staggerItem}
-              className="mb-8"
-              style={{ color: 'var(--color-text-secondary)' }}
-            >
-              {locale === 'ar'
-                ? 'ابدأ التسوق الآن واستكشف منتجاتنا'
-                : 'Start shopping and explore our products'}
-            </motion.p>
-
             <motion.div variants={staggerItem}>
               <Link
                 href={`/${locale}/products`}
@@ -219,7 +251,6 @@ export default function OrdersPage() {
     );
   }
 
-  // ORDERS LIST
   return (
     <PageTransition>
       <div
@@ -227,7 +258,6 @@ export default function OrdersPage() {
         style={{ background: 'var(--color-bg-base)' }}
       >
         <div className="max-w-5xl mx-auto relative">
-          {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -266,14 +296,16 @@ export default function OrdersPage() {
               {t('orders.title')}
             </h1>
 
-            <p className="text-lg" style={{ color: 'var(--color-text-secondary)' }}>
+            <p
+              className="text-lg"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
               {locale === 'ar'
                 ? `لديك ${orders.length} طلب`
                 : `You have ${orders.length} orders`}
             </p>
           </motion.div>
 
-          {/* Orders */}
           <motion.div
             initial="hidden"
             animate="visible"
@@ -282,7 +314,6 @@ export default function OrdersPage() {
           >
             {orders.map((o) => {
               const status = STATUS_CONFIG[o.status] || STATUS_CONFIG.pending;
-              const StatusIcon = status.icon;
               const isExpanded = expanded === o.id;
 
               return (
@@ -296,7 +327,6 @@ export default function OrdersPage() {
                     boxShadow: '0 4px 20px rgba(0, 0, 0, 0.2)'
                   }}
                 >
-                  {/* Header */}
                   <div
                     className="p-5 cursor-pointer"
                     onClick={() => setExpanded(isExpanded ? null : o.id!)}
@@ -306,12 +336,12 @@ export default function OrdersPage() {
                         <div
                           className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
                           style={{
-                            background: status.bg,
+                            background: 'rgba(212, 175, 55, 0.15)',
                             color: status.color,
-                            border: `1px solid ${status.border}`
+                            border: `1px solid ${status.color}40`
                           }}
                         >
-                          <StatusIcon size={22} />
+                          <Package size={22} />
                         </div>
                         <div>
                           <p
@@ -359,9 +389,9 @@ export default function OrdersPage() {
                       <span
                         className="px-3 py-1.5 rounded-full text-xs font-bold"
                         style={{
-                          background: status.bg,
+                          background: `${status.color}20`,
                           color: status.color,
-                          border: `1px solid ${status.border}`
+                          border: `1px solid ${status.color}40`
                         }}
                       >
                         {locale === 'ar' ? status.ar : status.en}
@@ -376,7 +406,6 @@ export default function OrdersPage() {
                     </div>
                   </div>
 
-                  {/* Expanded */}
                   <AnimatePresence>
                     {isExpanded && (
                       <motion.div
@@ -391,6 +420,21 @@ export default function OrdersPage() {
                         }}
                       >
                         <div className="p-5 space-y-4">
+                          {/* Timeline */}
+                          <div>
+                            <h4
+                              className="font-bold mb-2 flex items-center gap-2 text-sm"
+                              style={{ color: 'var(--color-text-primary)' }}
+                            >
+                              <Truck
+                                size={16}
+                                style={{ color: 'var(--color-secondary-500)' }}
+                              />
+                              {locale === 'ar' ? 'حالة الطلب' : 'Order Status'}
+                            </h4>
+                            <OrderTimeline order={o} locale={locale} />
+                          </div>
+
                           {/* Items */}
                           <div>
                             <h4
@@ -424,20 +468,36 @@ export default function OrdersPage() {
                                   <div className="flex-1 min-w-0">
                                     <p
                                       className="font-semibold text-sm line-clamp-1"
-                                      style={{ color: 'var(--color-text-primary)' }}
+                                      style={{
+                                        color: 'var(--color-text-primary)'
+                                      }}
                                     >
                                       {i.name}
+                                      {i.variantName && (
+                                        <span
+                                          className="text-xs ml-1"
+                                          style={{
+                                            color: 'var(--color-text-muted)'
+                                          }}
+                                        >
+                                          ({i.variantName})
+                                        </span>
+                                      )}
                                     </p>
                                     <p
                                       className="text-xs mt-0.5"
-                                      style={{ color: 'var(--color-text-muted)' }}
+                                      style={{
+                                        color: 'var(--color-text-muted)'
+                                      }}
                                     >
                                       {i.qty} × {formatPrice(i.price, locale)}
                                     </p>
                                   </div>
                                   <p
                                     className="font-bold text-sm"
-                                    style={{ color: 'var(--color-secondary-500)' }}
+                                    style={{
+                                      color: 'var(--color-secondary-500)'
+                                    }}
                                   >
                                     {formatPrice(i.price * i.qty, locale)}
                                   </p>
@@ -471,7 +531,9 @@ export default function OrdersPage() {
                               </p>
                               <p
                                 className="text-xs mt-1"
-                                style={{ color: 'var(--color-text-secondary)' }}
+                                style={{
+                                  color: 'var(--color-text-secondary)'
+                                }}
                                 dir="ltr"
                               >
                                 📞 {o.userPhone}
@@ -479,11 +541,8 @@ export default function OrdersPage() {
                             </div>
                           )}
 
-                          {/* Pending notice */}
                           {o.status === 'pending' && (
-                            <motion.div
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
+                            <div
                               className="rounded-xl p-3 flex items-start gap-2"
                               style={{
                                 background: 'rgba(234, 179, 8, 0.1)',
@@ -501,10 +560,9 @@ export default function OrdersPage() {
                               >
                                 {t('checkout.pendingNote')}
                               </p>
-                            </motion.div>
+                            </div>
                           )}
 
-                          {/* Receipt */}
                           {o.receiptUrl && (
                             <a
                               href={o.receiptUrl}

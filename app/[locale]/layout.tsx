@@ -5,10 +5,13 @@ import { notFound } from 'next/navigation';
 import { AuthProvider } from '@/components/AuthProvider';
 import { CartProvider } from '@/components/CartProvider';
 import { ThemeProvider } from '@/components/ThemeProvider';
+import { WishlistProvider } from '@/components/WishlistProvider';
+import { CompareProvider } from '@/components/CompareProvider';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import WhatsAppButton from '@/components/WhatsAppButton';
 import MedicalLoader from '@/components/MedicalLoader';
+import CompareBar from '@/components/CompareBar';
 import { Toaster } from 'react-hot-toast';
 
 export function generateStaticParams() {
@@ -24,20 +27,20 @@ export default async function LocaleLayout({
 }) {
   if (!['ar', 'en'].includes(locale)) notFound();
   const messages = await getMessages();
-  const dir = locale === 'ar' ? 'rtl' : 'ltr';
 
   return (
-    <html lang={locale} dir={dir}>
-      <body className="bg-gray-50 min-h-screen flex flex-col">
-        <NextIntlClientProvider messages={messages}>
-          <ThemeProvider>
-            <AuthProvider>
+    <NextIntlClientProvider messages={messages}>
+      <ThemeProvider>
+        <AuthProvider>
+          <WishlistProvider>
+            <CompareProvider>
               <CartProvider>
                 <MedicalLoader />
                 <Navbar />
-                <main className="flex-1">{children}</main>
+                <main className="flex-1 pb-24">{children}</main>
                 <Footer />
                 <WhatsAppButton />
+                <CompareBar />
                 <Toaster
                   position="top-center"
                   toastOptions={{
@@ -50,56 +53,21 @@ export default async function LocaleLayout({
                       padding: '12px 20px',
                       fontWeight: '600',
                       fontSize: '14px',
-                      boxShadow: '0 10px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(212, 175, 55, 0.2)',
-                      maxWidth: '400px'
+                      boxShadow: '0 10px 40px rgba(0, 0, 0, 0.4)'
                     },
                     success: {
-                      duration: 3000,
-                      iconTheme: {
-                        primary: '#d4af37',
-                        secondary: '#1a2f4d'
-                      },
-                      style: {
-                        background: '#1a2f4d',
-                        color: '#f8fafc',
-                        border: '1px solid rgba(212, 175, 55, 0.5)',
-                        borderRadius: '12px',
-                        padding: '12px 20px',
-                        fontWeight: '600',
-                        fontSize: '14px',
-                        boxShadow: '0 10px 40px rgba(212, 175, 55, 0.3)'
-                      }
+                      iconTheme: { primary: '#d4af37', secondary: '#1a2f4d' }
                     },
                     error: {
-                      duration: 4000,
-                      iconTheme: {
-                        primary: '#ef4444',
-                        secondary: '#ffffff'
-                      },
-                      style: {
-                        background: '#1a2f4d',
-                        color: '#fca5a5',
-                        border: '1px solid rgba(239, 68, 68, 0.5)',
-                        borderRadius: '12px',
-                        padding: '12px 20px',
-                        fontWeight: '600',
-                        fontSize: '14px',
-                        boxShadow: '0 10px 40px rgba(239, 68, 68, 0.3)'
-                      }
-                    },
-                    loading: {
-                      iconTheme: {
-                        primary: '#d4af37',
-                        secondary: '#1a2f4d'
-                      }
+                      iconTheme: { primary: '#ef4444', secondary: '#fff' }
                     }
                   }}
                 />
               </CartProvider>
-            </AuthProvider>
-          </ThemeProvider>
-        </NextIntlClientProvider>
-      </body>
-    </html>
+            </CompareProvider>
+          </WishlistProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </NextIntlClientProvider>
   );
 }

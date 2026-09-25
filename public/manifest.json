@@ -1,0 +1,13 @@
+{
+  "name": "Sovereign - متجر الأدوات الطبية",
+  "short_name": "Sovereign",
+  "description": "متجرك الأول للسكرابات والأدوات الطبية عالية الجودة",
+  "start_url": "/ar",
+  "display": "standalone",
+  "background_color": "#0a1828",
+  "theme_color": "#d4af37",
+  "orientation": "portrait",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": ["shopping", "medical", "business"]
+}

@@ -4,11 +4,12 @@
     "products": "المنتجات",
     "orders": "طلباتي",
     "cart": "السلة",
+    "wishlist": "المفضلة",
+    "account": "حسابي",
     "login": "تسجيل الدخول",
     "register": "حساب جديد",
     "logout": "خروج",
-    "admin": "لوحة التحكم",
-    "account": "حسابي"
+    "admin": "لوحة التحكم"
   },
   "hero": {
     "title": "Sovereign - رفيقك في الطب",
@@ -119,6 +120,7 @@
     "products": "المنتجات",
     "orders": "الطلبات",
     "coupons": "الكوبونات",
+    "theme": "الألوان",
     "addProduct": "إضافة منتج",
     "editProduct": "تعديل منتج",
     "addCoupon": "إضافة كوبون",

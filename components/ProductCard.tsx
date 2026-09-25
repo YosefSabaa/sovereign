@@ -1,17 +1,50 @@
 'use client';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import { useCart } from './CartProvider';
+import { useWishlist } from './WishlistProvider';
+import { useCompare } from './CompareProvider';
 import { Product } from '@/lib/firestore';
 import toast from 'react-hot-toast';
-import { ShoppingCart, Star } from 'lucide-react';
+import { ShoppingCart, Star, Heart, GitCompare } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 
 export default function ProductCard({ product }: { product: Product }) {
   const locale = useLocale();
   const t = useTranslations('product');
   const { add } = useCart();
+  const { isInWishlist, toggle } = useWishlist();
+  const { isInCompare, toggle: toggleCompare, isFull } = useCompare();
+
+  const [mounted, setMounted] = useState(false);
+  const [flashSaleActive, setFlashSaleActive] = useState(false);
+  const [inWishlist, setInWishlist] = useState(false);
+  const [inCompare, setInCompare] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted || !product.flashSale?.enabled || !product.flashSale.endsAt) {
+      return;
+    }
+    const check = () => {
+      setFlashSaleActive(product.flashSale!.endsAt.toMillis() > Date.now());
+    };
+    check();
+    const interval = setInterval(check, 1000);
+    return () => clearInterval(interval);
+  }, [product.flashSale, mounted]);
+
+  useEffect(() => {
+    if (mounted && product.id) {
+      setInWishlist(isInWishlist(product.id));
+      setInCompare(isInCompare(product.id));
+    }
+  }, [mounted, product.id, isInWishlist, isInCompare]);
 
   const name = locale === 'ar' ? product.nameAr : product.nameEn;
   const onSale = product.oldPrice && product.oldPrice > product.price;
@@ -29,6 +62,51 @@ export default function ProductCard({ product }: { product: Product }) {
       qty: 1
     });
     toast.success(locale === 'ar' ? 'تمت الإضافة للسلة ✓' : 'Added to cart ✓');
+  };
+
+  const handleWishlist = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!product.id) return;
+    const wasIn = inWishlist;
+    setInWishlist(!wasIn);
+    await toggle(product.id);
+    toast.success(
+      wasIn
+        ? locale === 'ar'
+          ? 'تم الحذف من المفضلة'
+          : 'Removed from wishlist'
+        : locale === 'ar'
+          ? 'تمت الإضافة للمفضلة ❤️'
+          : 'Added to wishlist ❤️'
+    );
+  };
+
+  const handleCompare = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!product.id) return;
+
+    if (!inCompare && isFull) {
+      toast.error(
+        locale === 'ar'
+          ? 'الحد الأقصى 3 منتجات'
+          : 'Maximum 3 products'
+      );
+      return;
+    }
+
+    const wasIn = inCompare;
+    setInCompare(!wasIn);
+    toggleCompare(product.id);
+
+    toast.success(
+      wasIn
+        ? locale === 'ar'
+          ? 'تم الحذف من المقارنة'
+          : 'Removed from compare'
+        : locale === 'ar'
+          ? 'تمت الإضافة للمقارنة'
+          : 'Added to compare'
+    );
   };
 
   return (
@@ -52,6 +130,7 @@ export default function ProductCard({ product }: { product: Product }) {
               className="w-full h-full object-cover"
               whileHover={{ scale: 1.15 }}
               transition={{ duration: 0.7 }}
+              loading="lazy"
             />
 
             <motion.div
@@ -60,14 +139,75 @@ export default function ProductCard({ product }: { product: Product }) {
               whileHover={{ opacity: 1 }}
             />
 
-            {onSale && (
+            {/* Top-left buttons */}
+            {mounted && (
+              <div className="absolute top-3 left-3 flex flex-col gap-2 z-10">
+                <motion.button
+                  onClick={handleWishlist}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="w-10 h-10 rounded-full flex items-center justify-center shadow-lg backdrop-blur-sm transition-colors"
+                  style={{
+                    background: inWishlist
+                      ? '#ef4444'
+                      : 'rgba(26, 47, 77, 0.9)',
+                    color: inWishlist
+                      ? '#fff'
+                      : 'var(--color-secondary-500)',
+                    border: '1px solid rgba(212, 175, 55, 0.3)'
+                  }}
+                >
+                  <Heart
+                    size={18}
+                    className={inWishlist ? 'fill-white' : ''}
+                  />
+                </motion.button>
+
+                <motion.button
+                  onClick={handleCompare}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="w-10 h-10 rounded-full flex items-center justify-center shadow-lg backdrop-blur-sm transition-colors"
+                  style={{
+                    background: inCompare
+                      ? 'var(--color-secondary-500)'
+                      : 'rgba(26, 47, 77, 0.9)',
+                    color: inCompare
+                      ? '#0a1828'
+                      : 'var(--color-secondary-500)',
+                    border: '1px solid rgba(212, 175, 55, 0.3)'
+                  }}
+                >
+                  <GitCompare size={18} />
+                </motion.button>
+              </div>
+            )}
+
+            {onSale && !flashSaleActive && (
               <motion.span
-                initial={{ x: -50, opacity: 0 }}
+                initial={{ x: 50, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 className="absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-bold shadow-lg"
-                style={{ background: 'linear-gradient(to right, #ef4444, #dc2626)', color: '#fff' }}
+                style={{
+                  background: 'linear-gradient(to right, #ef4444, #dc2626)',
+                  color: '#fff'
+                }}
               >
                 -{discountPercent}%
+              </motion.span>
+            )}
+
+            {mounted && flashSaleActive && (
+              <motion.span
+                animate={{ scale: [1, 1.05, 1] }}
+                transition={{ duration: 1, repeat: Infinity }}
+                className="absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-bold shadow-lg flex items-center gap-1"
+                style={{
+                  background: 'linear-gradient(to right, #f59e0b, #d97706)',
+                  color: '#fff'
+                }}
+              >
+                ⚡ -{product.flashSale!.discountPercent}%
               </motion.span>
             )}
 
@@ -89,7 +229,10 @@ export default function ProductCard({ product }: { product: Product }) {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="absolute bottom-3 left-3 right-3 py-3 rounded-xl font-bold opacity-0 group-hover:opacity-100 transition-all duration-300 disabled:opacity-50 flex items-center justify-center gap-2 shadow-2xl"
-              style={{ background: 'var(--color-secondary-500)', color: '#0a1828' }}
+              style={{
+                background: 'var(--color-secondary-500)',
+                color: '#0a1828'
+              }}
             >
               <ShoppingCart size={18} />
               {t('addToCart')}
@@ -114,7 +257,7 @@ export default function ProductCard({ product }: { product: Product }) {
                       className={
                         i < Math.round(product.rating!)
                           ? 'fill-yellow-400 text-yellow-400'
-                          : 'text-gray-300'
+                          : 'text-gray-500'
                       }
                     />
                   ))}

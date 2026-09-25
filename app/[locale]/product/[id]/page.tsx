@@ -7,15 +7,21 @@ import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  getProduct, getProductReviews, addReview, Product, Review
+  getProduct, getProductReviews, addReview, Product, Review,
+  ProductVariant
 } from '@/lib/firestore';
 import { useCart } from '@/components/CartProvider';
 import { useAuth } from '@/components/AuthProvider';
+import { useWishlist } from '@/components/WishlistProvider';
+import { useCompare } from '@/components/CompareProvider';
+import ImageGallery from '@/components/ImageGallery';
+import VariantSelector from '@/components/VariantSelector';
+import RelatedProducts from '@/components/RelatedProducts';
 import { formatPrice, formatDate } from '@/lib/utils';
 import {
   ShoppingCart, Star, Minus, Plus, ArrowLeft, ArrowRight,
   Package, Check, AlertTriangle, RefreshCw, Heart,
-  Truck, ShieldCheck, Sparkles, Send, Award
+  Truck, ShieldCheck, Sparkles, Send, Award, GitCompare
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -26,30 +32,39 @@ export default function ProductDetailPage() {
   const t = useTranslations();
   const { add } = useCart();
   const { user } = useAuth();
+  const { isInWishlist, toggle: toggleWishlist } = useWishlist();
+  const { isInCompare, toggle: toggleCompare, isFull: compareFull } =
+    useCompare();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [qty, setQty] = useState(1);
 
+  const [selectedVariant, setSelectedVariant] =
+    useState<ProductVariant | null>(null);
+
   const [rating, setRating] = useState(5);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
+
+  const [inWishlist, setInWishlist] = useState(false);
+  const [inCompare, setInCompare] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
 
   const Arrow = locale === 'ar' ? ArrowRight : ArrowLeft;
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
     const id = params?.id as string;
-    if (!id || id === 'undefined' || id === 'null') {
-      setError(
-        locale === 'ar'
-          ? `المعرّف غير صحيح`
-          : `Invalid ID`
-      );
+    if (!id) {
+      setError(locale === 'ar' ? 'معرّف غير صحيح' : 'Invalid ID');
       setLoading(false);
       return;
     }
@@ -62,6 +77,12 @@ export default function ProductDetailPage() {
         }
         setProduct(p);
         setReviews(r);
+
+        // اختار أول variant متاح
+        if (p.variants && p.variants.length > 0) {
+          const firstAvailable = p.variants.find((v) => v.stock > 0);
+          setSelectedVariant(firstAvailable || p.variants[0]);
+        }
       })
       .catch((err) => {
         console.error(err);
@@ -70,7 +91,14 @@ export default function ProductDetailPage() {
       .finally(() => setLoading(false));
   }, [params, locale, router]);
 
-  // LOADING
+  useEffect(() => {
+    if (mounted && product?.id) {
+      setInWishlist(isInWishlist(product.id));
+      setInCompare(isInCompare(product.id));
+    }
+  }, [mounted, product?.id, isInWishlist, isInCompare]);
+
+  // ==================== LOADING ====================
   if (loading) {
     return (
       <div
@@ -96,10 +124,6 @@ export default function ProductDetailPage() {
                 className="h-32 rounded-2xl"
                 style={{ background: 'var(--color-bg-card)' }}
               />
-              <div
-                className="h-14 rounded-full"
-                style={{ background: 'var(--color-bg-card)' }}
-              />
             </div>
           </div>
         </div>
@@ -107,11 +131,10 @@ export default function ProductDetailPage() {
     );
   }
 
-  // ERROR
   if (error) {
     return (
       <div
-        className="min-h-screen flex items-center justify-center px-4 py-16"
+        className="min-h-screen flex items-center justify-center px-4"
         style={{ background: 'var(--color-bg-base)' }}
       >
         <div
@@ -121,36 +144,27 @@ export default function ProductDetailPage() {
             border: '2px solid rgba(239, 68, 68, 0.3)'
           }}
         >
-          <div
-            className="w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4"
-            style={{ background: 'rgba(239, 68, 68, 0.15)' }}
-          >
-            <AlertTriangle size={32} style={{ color: '#ef4444' }} />
-          </div>
+          <AlertTriangle
+            size={48}
+            className="mx-auto mb-4"
+            style={{ color: '#ef4444' }}
+          />
           <h1
             className="text-2xl font-black mb-3"
             style={{ color: 'var(--color-text-primary)' }}
           >
             {locale === 'ar' ? 'حدث خطأ' : 'Error'}
           </h1>
-          <p
-            className="mb-6"
-            style={{ color: 'var(--color-text-secondary)' }}
-          >
+          <p className="mb-6" style={{ color: 'var(--color-text-secondary)' }}>
             {error}
           </p>
-          <div className="flex gap-3 justify-center">
-            <button
-              onClick={() => window.location.reload()}
-              className="btn-primary"
-            >
-              <RefreshCw size={18} />
-              {locale === 'ar' ? 'إعادة المحاولة' : 'Retry'}
-            </button>
-            <Link href={`/${locale}/products`} className="btn-outline">
-              {locale === 'ar' ? 'كل المنتجات' : 'All Products'}
-            </Link>
-          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="btn-primary inline-flex"
+          >
+            <RefreshCw size={18} />
+            {locale === 'ar' ? 'إعادة المحاولة' : 'Retry'}
+          </button>
         </div>
       </div>
     );
@@ -165,20 +179,88 @@ export default function ProductDetailPage() {
     ? Math.round(((product.oldPrice! - product.price) / product.oldPrice!) * 100)
     : 0;
 
+  // السعر النهائي بعد variant
+  const finalPrice = selectedVariant?.priceAdjustment
+    ? product.price + selectedVariant.priceAdjustment
+    : product.price;
+
+  // المخزون المتاح
+  const availableStock = selectedVariant
+    ? selectedVariant.stock
+    : product.stock;
+
+  // الصور (بما فيها صور الـ variants)
+  const allImages = [
+    ...(product.images || []),
+    product.image,
+    ...(product.variants?.filter((v) => v.image).map((v) => v.image!) || [])
+  ].filter(Boolean);
+
+  // إزالة التكرار
+  const uniqueImages = Array.from(new Set(allImages));
+
   const handleAdd = () => {
+    if (!product.id) return;
+
+    if (availableStock === 0) {
+      toast.error(locale === 'ar' ? 'غير متوفر' : 'Out of stock');
+      return;
+    }
+
     add({
-      productId: product.id!,
+      productId: product.id,
       name,
-      price: product.price,
-      image: product.image,
-      qty
+      price: finalPrice,
+      image: selectedVariant?.image || product.image,
+      qty,
+      variantId: selectedVariant?.id,
+      variantName: selectedVariant?.name
     });
+
     toast.success(locale === 'ar' ? 'تمت الإضافة للسلة ✓' : 'Added to cart ✓');
   };
 
   const handleBuyNow = () => {
     handleAdd();
     router.push(`/${locale}/cart`);
+  };
+
+  const handleWishlist = async () => {
+    if (!product.id) return;
+    const wasIn = inWishlist;
+    setInWishlist(!wasIn);
+    await toggleWishlist(product.id);
+    toast.success(
+      wasIn
+        ? locale === 'ar'
+          ? 'تم الحذف من المفضلة'
+          : 'Removed'
+        : locale === 'ar'
+          ? 'تمت الإضافة للمفضلة ❤️'
+          : 'Added to wishlist ❤️'
+    );
+  };
+
+  const handleCompare = () => {
+    if (!product.id) return;
+    if (!inCompare && compareFull) {
+      toast.error(
+        locale === 'ar' ? 'الحد الأقصى 3 منتجات' : 'Maximum 3 products'
+      );
+      return;
+    }
+    const wasIn = inCompare;
+    setInCompare(!wasIn);
+    toggleCompare(product.id);
+    toast.success(
+      wasIn
+        ? locale === 'ar'
+          ? 'تم الحذف من المقارنة'
+          : 'Removed from compare'
+        : locale === 'ar'
+          ? 'تمت الإضافة للمقارنة'
+          : 'Added to compare'
+    );
   };
 
   const submitReview = async (e: React.FormEvent) => {
@@ -220,7 +302,7 @@ export default function ProductDetailPage() {
       className="min-h-screen py-8 px-4 relative overflow-hidden"
       style={{ background: 'var(--color-bg-base)' }}
     >
-      {/* Decorative background */}
+      {/* Decorative */}
       <div className="absolute inset-0 pointer-events-none">
         <div
           className="absolute top-20 -right-20 w-96 h-96 rounded-full blur-3xl opacity-20"
@@ -237,12 +319,12 @@ export default function ProductDetailPage() {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-2 text-sm mb-6"
+          className="flex items-center gap-2 text-sm mb-6 flex-wrap"
           style={{ color: 'var(--color-text-muted)' }}
         >
           <Link
             href={`/${locale}/products`}
-            className="inline-flex items-center gap-1.5 font-semibold transition-colors group hover:opacity-80"
+            className="inline-flex items-center gap-1.5 font-semibold group"
             style={{ color: 'var(--color-secondary-500)' }}
           >
             <Arrow
@@ -251,7 +333,15 @@ export default function ProductDetailPage() {
             />
             {t('common.back')}
           </Link>
-          <span style={{ color: 'var(--color-text-muted)' }}>/</span>
+          <span>/</span>
+          <Link
+            href={`/${locale}/products?category=${product.category}`}
+            className="font-medium hover:opacity-80"
+            style={{ color: 'var(--color-text-secondary)' }}
+          >
+            {product.category}
+          </Link>
+          <span>/</span>
           <span
             className="font-medium line-clamp-1"
             style={{ color: 'var(--color-text-secondary)' }}
@@ -269,149 +359,47 @@ export default function ProductDetailPage() {
             transition={{ duration: 0.6 }}
             className="lg:sticky lg:top-24 h-fit"
           >
-            <div className="relative">
-              {/* Glow */}
-              <div
-                className="absolute -inset-4 rounded-[2rem] blur-2xl opacity-30"
-                style={{
-                  background: `linear-gradient(to bottom right, var(--color-secondary-500), var(--color-primary-500))`
-                }}
-              />
+            <ImageGallery images={uniqueImages} alt={name} />
 
-              {/* Image */}
-              <div
-                className="relative aspect-square rounded-3xl overflow-hidden shadow-2xl group"
-                style={{
-                  background: 'var(--color-bg-card)',
-                  border: '1px solid rgba(212, 175, 55, 0.2)'
-                }}
-              >
-                <motion.img
-                  src={product.image}
-                  alt={name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                />
-
-                {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                {/* Badges */}
-                <div className="absolute top-4 right-4 flex flex-col gap-2 items-end">
-                  {onSale && (
-                    <motion.span
-                      initial={{ x: 50, opacity: 0 }}
-                      animate={{ x: 0, opacity: 1 }}
-                      transition={{ delay: 0.2 }}
-                      className="px-4 py-2 rounded-full font-bold shadow-xl flex items-center gap-1"
-                      style={{
-                        background: 'linear-gradient(to right, #ef4444, #dc2626)',
-                        color: '#fff'
-                      }}
-                    >
-                      <Sparkles size={16} />
-                      -{discountPercent}%
-                    </motion.span>
-                  )}
-                  {product.stock > 0 && product.stock < 5 && (
-                    <span
-                      className="px-3 py-1.5 rounded-full text-xs font-bold shadow-lg"
-                      style={{
-                        background: 'linear-gradient(to right, #f97316, #ea580c)',
-                        color: '#fff'
-                      }}
-                    >
-                      {locale === 'ar'
-                        ? `آخر ${product.stock} قطع!`
-                        : `Only ${product.stock} left!`}
-                    </span>
-                  )}
-                </div>
-
-                {/* Favorite */}
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => setIsFavorite(!isFavorite)}
-                  className="absolute top-4 left-4 w-12 h-12 rounded-full flex items-center justify-center shadow-xl backdrop-blur-sm transition-colors"
+            {/* Trust badges */}
+            <div className="grid grid-cols-3 gap-3 mt-4">
+              {[
+                {
+                  icon: Truck,
+                  label: locale === 'ar' ? 'شحن سريع' : 'Fast Ship'
+                },
+                {
+                  icon: ShieldCheck,
+                  label: locale === 'ar' ? 'دفع آمن' : 'Secure'
+                },
+                {
+                  icon: Award,
+                  label: locale === 'ar' ? 'جودة عالية' : 'Premium'
+                }
+              ].map(({ icon: Icon, label }, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 + i * 0.1 }}
+                  className="flex flex-col items-center gap-1.5 p-3 rounded-2xl transition-all hover:scale-105"
                   style={{
-                    background: isFavorite
-                      ? '#ef4444'
-                      : 'rgba(26, 47, 77, 0.9)',
-                    color: isFavorite
-                      ? '#fff'
-                      : 'var(--color-secondary-500)',
-                    border: '1px solid rgba(212, 175, 55, 0.3)'
+                    background: 'var(--color-bg-card)',
+                    border: '1px solid rgba(212, 175, 55, 0.2)'
                   }}
                 >
-                  <Heart
-                    size={22}
-                    className={isFavorite ? 'fill-white' : ''}
+                  <Icon
+                    size={20}
+                    style={{ color: 'var(--color-secondary-500)' }}
                   />
-                </motion.button>
-
-                {/* Out of stock */}
-                {product.stock === 0 && (
-                  <div className="absolute inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center">
-                    <div
-                      className="px-8 py-6 rounded-2xl text-center shadow-2xl"
-                      style={{ background: 'var(--color-bg-card)' }}
-                    >
-                      <Package
-                        size={48}
-                        className="mx-auto mb-2"
-                        style={{ color: 'var(--color-text-muted)' }}
-                      />
-                      <p
-                        className="font-black text-xl"
-                        style={{ color: 'var(--color-text-primary)' }}
-                      >
-                        {t('product.outOfStock')}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Trust badges */}
-              <div className="grid grid-cols-3 gap-3 mt-4">
-                {[
-                  {
-                    icon: Truck,
-                    label: locale === 'ar' ? 'شحن سريع' : 'Fast Ship'
-                  },
-                  {
-                    icon: ShieldCheck,
-                    label: locale === 'ar' ? 'دفع آمن' : 'Secure'
-                  },
-                  {
-                    icon: Award,
-                    label: locale === 'ar' ? 'جودة عالية' : 'Premium'
-                  }
-                ].map(({ icon: Icon, label }, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 + i * 0.1 }}
-                    className="flex flex-col items-center gap-1.5 p-3 rounded-2xl transition-all hover:scale-105"
-                    style={{
-                      background: 'var(--color-bg-card)',
-                      border: '1px solid rgba(212, 175, 55, 0.2)'
-                    }}
+                  <span
+                    className="text-xs font-bold"
+                    style={{ color: 'var(--color-text-primary)' }}
                   >
-                    <Icon
-                      size={20}
-                      style={{ color: 'var(--color-secondary-500)' }}
-                    />
-                    <span
-                      className="text-xs font-bold"
-                      style={{ color: 'var(--color-text-primary)' }}
-                    >
-                      {label}
-                    </span>
-                  </motion.div>
-                ))}
-              </div>
+                    {label}
+                  </span>
+                </motion.div>
+              ))}
             </div>
           </motion.div>
 
@@ -472,12 +460,12 @@ export default function ProductDetailPage() {
             </h1>
 
             {/* Price */}
-            <div className="flex items-baseline gap-3 mb-6">
+            <div className="flex items-baseline gap-3 mb-6 flex-wrap">
               <span
                 className="text-4xl md:text-5xl font-black"
                 style={{ color: 'var(--color-secondary-500)' }}
               >
-                {formatPrice(product.price, locale)}
+                {formatPrice(finalPrice, locale)}
               </span>
               {onSale && (
                 <span
@@ -487,13 +475,24 @@ export default function ProductDetailPage() {
                   {formatPrice(product.oldPrice!, locale)}
                 </span>
               )}
+              {onSale && (
+                <span
+                  className="px-3 py-1 rounded-full text-sm font-bold"
+                  style={{
+                    background: 'linear-gradient(to right, #ef4444, #dc2626)',
+                    color: '#fff'
+                  }}
+                >
+                  -{discountPercent}%
+                </span>
+              )}
             </div>
 
-            {/* Stock status */}
+            {/* Stock */}
             <div
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-bold mb-6"
               style={
-                product.stock > 0
+                availableStock > 0
                   ? {
                       background: 'rgba(16, 185, 129, 0.15)',
                       color: '#10b981',
@@ -506,11 +505,11 @@ export default function ProductDetailPage() {
                     }
               }
             >
-              {product.stock > 0 ? (
+              {availableStock > 0 ? (
                 <>
                   <span className="w-2 h-2 bg-current rounded-full animate-pulse" />
                   <Check size={16} />
-                  {t('product.inStock')} ({product.stock})
+                  {t('product.inStock')} ({availableStock})
                 </>
               ) : (
                 <>
@@ -522,7 +521,7 @@ export default function ProductDetailPage() {
 
             {/* Description */}
             <div
-              className="relative mb-8 p-5 rounded-2xl"
+              className="relative mb-6 p-5 rounded-2xl"
               style={{
                 background: 'var(--color-bg-card)',
                 border: '1px solid rgba(212, 175, 55, 0.15)'
@@ -535,6 +534,18 @@ export default function ProductDetailPage() {
                 {desc}
               </p>
             </div>
+
+            {/* Variants Selector */}
+            {product.variants && product.variants.length > 0 && (
+              <VariantSelector
+                variants={product.variants}
+                selectedId={selectedVariant?.id || null}
+                onSelect={(v) => {
+                  setSelectedVariant(v);
+                  setQty(1);
+                }}
+              />
+            )}
 
             {/* Quantity */}
             <div className="flex items-center gap-4 mb-6 flex-wrap">
@@ -568,8 +579,10 @@ export default function ProductDetailPage() {
                 </span>
                 <motion.button
                   whileTap={{ scale: 0.9 }}
-                  onClick={() => setQty(Math.min(product.stock, qty + 1))}
-                  disabled={qty >= product.stock}
+                  onClick={() =>
+                    setQty(Math.min(availableStock, qty + 1))
+                  }
+                  disabled={qty >= availableStock}
                   className="p-3 transition-colors disabled:opacity-30"
                   style={{ color: 'var(--color-text-primary)' }}
                 >
@@ -580,17 +593,17 @@ export default function ProductDetailPage() {
                 className="text-sm"
                 style={{ color: 'var(--color-text-muted)' }}
               >
-                = {formatPrice(product.price * qty, locale)}
+                = {formatPrice(finalPrice * qty, locale)}
               </span>
             </div>
 
             {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-3 mb-8">
+            <div className="flex flex-col sm:flex-row gap-3 mb-6">
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleAdd}
-                disabled={product.stock === 0}
+                disabled={availableStock === 0}
                 className="btn-secondary flex-1 text-lg py-4"
               >
                 <ShoppingCart size={22} />
@@ -600,21 +613,81 @@ export default function ProductDetailPage() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleBuyNow}
-                disabled={product.stock === 0}
+                disabled={availableStock === 0}
                 className="btn-primary flex-1 text-lg py-4"
               >
                 {t('product.buyNow')}
+              </motion.button>
+            </div>
+
+            {/* Secondary actions */}
+            <div className="flex gap-3">
+              <motion.button
+                onClick={handleWishlist}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all"
+                style={{
+                  background: inWishlist
+                    ? 'rgba(239, 68, 68, 0.15)'
+                    : 'var(--color-bg-card)',
+                  color: inWishlist
+                    ? '#ef4444'
+                    : 'var(--color-text-primary)',
+                  border: `2px solid ${
+                    inWishlist
+                      ? 'rgba(239, 68, 68, 0.3)'
+                      : 'rgba(212, 175, 55, 0.2)'
+                  }`
+                }}
+              >
+                <Heart
+                  size={18}
+                  className={inWishlist ? 'fill-current' : ''}
+                />
+                {inWishlist
+                  ? locale === 'ar'
+                    ? 'في المفضلة'
+                    : 'In Wishlist'
+                  : locale === 'ar'
+                    ? 'أضف للمفضلة'
+                    : 'Add to Wishlist'}
+              </motion.button>
+
+              <motion.button
+                onClick={handleCompare}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all"
+                style={{
+                  background: inCompare
+                    ? 'rgba(212, 175, 55, 0.15)'
+                    : 'var(--color-bg-card)',
+                  color: inCompare
+                    ? 'var(--color-secondary-500)'
+                    : 'var(--color-text-primary)',
+                  border: `2px solid ${
+                    inCompare
+                      ? 'rgba(212, 175, 55, 0.5)'
+                      : 'rgba(212, 175, 55, 0.2)'
+                  }`
+                }}
+              >
+                <GitCompare size={18} />
+                {inCompare
+                  ? locale === 'ar'
+                    ? 'في المقارنة'
+                    : 'In Compare'
+                  : locale === 'ar'
+                    ? 'أضف للمقارنة'
+                    : 'Add to Compare'}
               </motion.button>
             </div>
           </motion.div>
         </div>
 
         {/* ============ REVIEWS ============ */}
-        <motion.section
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+        <section
           className="pt-12"
           style={{ borderTop: '1px solid rgba(212, 175, 55, 0.15)' }}
         >
@@ -622,7 +695,7 @@ export default function ProductDetailPage() {
             <div
               className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg"
               style={{
-                background: 'linear-gradient(to bottom right, #facc15, #f59e0b)'
+                background: `linear-gradient(to bottom right, #facc15, #f59e0b)`
               }}
             >
               <Star size={24} className="text-white fill-white" />
@@ -669,14 +742,6 @@ export default function ProductDetailPage() {
                     style={{ color: 'var(--color-text-secondary)' }}
                   >
                     {t('product.noReviews')}
-                  </p>
-                  <p
-                    className="text-sm mt-1"
-                    style={{ color: 'var(--color-text-muted)' }}
-                  >
-                    {locale === 'ar'
-                      ? 'كن أول من يقيّم المنتج'
-                      : 'Be the first to review'}
                   </p>
                 </div>
               ) : (
@@ -751,8 +816,7 @@ export default function ProductDetailPage() {
                 className="rounded-3xl p-6 lg:sticky lg:top-24"
                 style={{
                   background: 'var(--color-bg-card)',
-                  border: '1px solid rgba(212, 175, 55, 0.2)',
-                  boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)'
+                  border: '1px solid rgba(212, 175, 55, 0.2)'
                 }}
               >
                 <div className="flex items-center gap-2 mb-5">
@@ -772,7 +836,6 @@ export default function ProductDetailPage() {
                   </h3>
                 </div>
 
-                {/* Rating stars */}
                 <div className="mb-5">
                   <label className="label">{t('product.yourRating')}</label>
                   <div className="flex gap-1">
@@ -797,21 +860,8 @@ export default function ProductDetailPage() {
                       </motion.button>
                     ))}
                   </div>
-                  <p
-                    className="text-xs mt-2"
-                    style={{ color: 'var(--color-text-muted)' }}
-                  >
-                    {rating === 5 &&
-                      (locale === 'ar' ? 'ممتاز! 🌟' : 'Excellent! 🌟')}
-                    {rating === 4 &&
-                      (locale === 'ar' ? 'جيد جداً 😊' : 'Very good 😊')}
-                    {rating === 3 && (locale === 'ar' ? 'جيد 🙂' : 'Good 🙂')}
-                    {rating === 2 && (locale === 'ar' ? 'مقبول 😐' : 'Fair 😐')}
-                    {rating === 1 && (locale === 'ar' ? 'سيء 😞' : 'Poor 😞')}
-                  </p>
                 </div>
 
-                {/* Comment */}
                 <div className="mb-5">
                   <label className="label">{t('product.yourComment')}</label>
                   <textarea
@@ -820,11 +870,6 @@ export default function ProductDetailPage() {
                     rows={4}
                     className="input resize-none"
                     required
-                    placeholder={
-                      locale === 'ar'
-                        ? 'شاركنا تجربتك مع المنتج...'
-                        : 'Share your experience...'
-                    }
                   />
                 </div>
 
@@ -859,7 +904,13 @@ export default function ProductDetailPage() {
               </form>
             </div>
           </div>
-        </motion.section>
+        </section>
+
+        {/* ============ RELATED PRODUCTS ============ */}
+        <RelatedProducts
+          category={product.category}
+          excludeId={product.id!}
+        />
       </div>
     </div>
   );
