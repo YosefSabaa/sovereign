@@ -13,7 +13,7 @@ export type ProductVariant = {
   priceAdjustment?: number;
   stock: number;
   image?: string;
-  hexColor?: string; // ⬅️ للألوان (مثال: #FF0000)
+  hexColor?: string;
 };
 
 export type Product = {
@@ -49,6 +49,8 @@ export type CartItem = {
   variantName?: string;
 };
 
+export type PaymentMethod = 'cod' | 'vodafone_cash' | 'instapay';
+
 export type Order = {
   id?: string;
   userId: string;
@@ -60,7 +62,8 @@ export type Order = {
   discount: number;
   total: number;
   couponCode?: string;
-  receiptUrl: string;
+  paymentMethod: PaymentMethod;
+  receiptUrl?: string;
   status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
   timeline?: Array<{
     status: Order['status'];
@@ -74,7 +77,8 @@ export type Order = {
 export type Coupon = {
   id?: string;
   code: string;
-  discountPercent: number;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
   active: boolean;
   minOrder?: number;
   expiresAt?: Timestamp;
@@ -148,6 +152,27 @@ export const getProductsByCategory = async (
   );
   const snap = await getDocs(q);
   return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Product));
+};
+
+export const getRelatedProducts = async (
+  category: string,
+  excludeId: string,
+  limitCount: number = 4
+): Promise<Product[]> => {
+  try {
+    const q = query(
+      collection(db, 'products'),
+      where('category', '==', category)
+    );
+    const snap = await getDocs(q);
+    const products = snap.docs
+      .map((d) => ({ id: d.id, ...d.data() } as Product))
+      .filter((p) => p.id !== excludeId)
+      .slice(0, limitCount);
+    return products;
+  } catch {
+    return [];
+  }
 };
 
 export const addProduct = async (p: Omit<Product, 'id'>) => {
@@ -361,27 +386,4 @@ export const isInWishlist = async (
   );
   const snap = await getDocs(q);
   return !snap.empty;
-};
-
-// ==================== RELATED PRODUCTS ====================
-
-export const getRelatedProducts = async (
-  category: string,
-  excludeId: string,
-  limitCount: number = 4
-): Promise<Product[]> => {
-  try {
-    const q = query(
-      collection(db, 'products'),
-      where('category', '==', category)
-    );
-    const snap = await getDocs(q);
-    const products = snap.docs
-      .map((d) => ({ id: d.id, ...d.data() } as Product))
-      .filter((p) => p.id !== excludeId)
-      .slice(0, limitCount);
-    return products;
-  } catch {
-    return [];
-  }
 };

@@ -7,6 +7,12 @@ import { useLocale, useTranslations } from 'next-intl';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCart } from '@/components/CartProvider';
 import { getCoupon } from '@/lib/firestore';
+import {
+  calculateDiscount,
+  toAppliedCoupon,
+  describeCoupon,
+  AppliedCoupon
+} from '@/lib/coupon';
 import { formatPrice } from '@/lib/utils';
 import PageTransition from '@/components/PageTransition';
 import {
@@ -14,9 +20,7 @@ import {
   ShoppingCart, Sparkles, X, CheckCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import {
-  staggerContainer, staggerItem, fadeInUp, heartbeat
-} from '@/lib/animations';
+import { staggerContainer, staggerItem, heartbeat } from '@/lib/animations';
 
 export default function CartPage() {
   const locale = useLocale();
@@ -24,14 +28,12 @@ export default function CartPage() {
   const { items, remove, updateQty, subtotal, clear } = useCart();
 
   const [couponCode, setCouponCode] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState<{
-    code: string;
-    percent: number;
-  } | null>(null);
+  const [appliedCoupon, setAppliedCoupon] =
+    useState<AppliedCoupon | null>(null);
   const [checking, setChecking] = useState(false);
 
   const Arrow = locale === 'ar' ? ArrowLeft : ArrowRight;
-  const discount = appliedCoupon ? (subtotal * appliedCoupon.percent) / 100 : 0;
+  const discount = calculateDiscount(subtotal, appliedCoupon);
   const total = subtotal - discount;
 
   const applyCoupon = async () => {
@@ -43,8 +45,21 @@ export default function CartPage() {
         toast.error(t('cart.couponInvalid'));
         setAppliedCoupon(null);
       } else {
-        setAppliedCoupon({ code: c.code, percent: c.discountPercent });
-        toast.success(`${t('cart.couponApplied')} -${c.discountPercent}%`);
+        if (c.minOrder && subtotal < c.minOrder) {
+          toast.error(
+            locale === 'ar'
+              ? `الحد الأدنى للطلب ${c.minOrder} ج.م`
+              : `Minimum order ${c.minOrder} EGP`
+          );
+          return;
+        }
+        const applied = toAppliedCoupon(c);
+        setAppliedCoupon(applied);
+        toast.success(
+          `${describeCoupon(applied, locale)} ${
+            locale === 'ar' ? 'تم التطبيق!' : 'applied!'
+          }`
+        );
       }
     } catch {
       toast.error(t('cart.couponInvalid'));
@@ -59,14 +74,10 @@ export default function CartPage() {
   };
 
   const goToCheckout = () => {
-    sessionStorage.setItem(
-      'sovereign_coupon',
-      JSON.stringify(appliedCoupon)
-    );
+    sessionStorage.setItem('sovereign_coupon', JSON.stringify(appliedCoupon));
     window.location.href = `/${locale}/checkout`;
   };
 
-  // ==================== EMPTY ====================
   if (items.length === 0) {
     return (
       <PageTransition>
@@ -74,15 +85,10 @@ export default function CartPage() {
           className="min-h-[80vh] flex items-center justify-center px-4 relative overflow-hidden"
           style={{ background: 'var(--color-bg-base)' }}
         >
-          {/* Decorative orbs */}
           <div className="absolute inset-0 pointer-events-none">
             <div
               className="absolute top-20 left-20 w-64 h-64 rounded-full blur-3xl opacity-20"
               style={{ background: 'var(--color-secondary-500)' }}
-            />
-            <div
-              className="absolute bottom-20 right-20 w-64 h-64 rounded-full blur-3xl opacity-20"
-              style={{ background: 'var(--color-primary-500)' }}
             />
           </div>
 
@@ -149,25 +155,12 @@ export default function CartPage() {
     );
   }
 
-  // ==================== CART ====================
   return (
     <PageTransition>
       <div
         className="min-h-screen py-10 px-4 relative overflow-hidden"
         style={{ background: 'var(--color-bg-base)' }}
       >
-        {/* Decorative */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div
-            className="absolute top-20 -right-20 w-96 h-96 rounded-full blur-3xl opacity-10"
-            style={{ background: 'var(--color-secondary-500)' }}
-          />
-          <div
-            className="absolute bottom-20 -left-20 w-96 h-96 rounded-full blur-3xl opacity-10"
-            style={{ background: 'var(--color-primary-500)' }}
-          />
-        </div>
-
         <div className="max-w-7xl mx-auto relative">
           {/* Header */}
           <motion.div
@@ -228,7 +221,7 @@ export default function CartPage() {
               <AnimatePresence mode="popLayout">
                 {items.map((item) => (
                   <motion.div
-                    key={item.productId}
+                    key={`${item.productId}_${item.variantId || ''}`}
                     layout
                     initial={{ opacity: 0, x: -30 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -255,13 +248,31 @@ export default function CartPage() {
 
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start gap-3">
-                        <Link
-                          href={`/${locale}/product/${item.productId}`}
-                          className="font-bold line-clamp-2 transition-colors"
-                          style={{ color: 'var(--color-text-primary)' }}
-                        >
-                          {item.name}
-                        </Link>
+                        <div className="min-w-0">
+                          <Link
+                            href={`/${locale}/product/${item.productId}`}
+                            className="font-bold line-clamp-2 transition-colors"
+                            style={{ color: 'var(--color-text-primary)' }}
+                          >
+                            {item.name}
+                          </Link>
+                          {item.variantName && (
+                            <p
+                              className="text-xs mt-1"
+                              style={{ color: 'var(--color-text-muted)' }}
+                            >
+                              {locale === 'ar' ? 'الحجم:' : 'Size:'}{' '}
+                              <span
+                                style={{
+                                  color: 'var(--color-secondary-500)',
+                                  fontWeight: 700
+                                }}
+                              >
+                                {item.variantName}
+                              </span>
+                            </p>
+                          )}
+                        </div>
                         <button
                           onClick={() => remove(item.productId)}
                           className="p-1.5 rounded-lg transition-colors flex-shrink-0"
@@ -282,7 +293,6 @@ export default function CartPage() {
                       </p>
 
                       <div className="flex items-center justify-between mt-3 flex-wrap gap-3">
-                        {/* Quantity */}
                         <div
                           className="flex items-center rounded-full overflow-hidden"
                           style={{
@@ -409,8 +419,7 @@ export default function CartPage() {
                       <div className="flex items-center gap-2">
                         <CheckCircle
                           size={20}
-                          style={{ color: '#10b981' }}
-                          className="flex-shrink-0"
+                          style={{ color: '#10b981', flexShrink: 0 }}
                         />
                         <div>
                           <p
@@ -423,8 +432,7 @@ export default function CartPage() {
                             className="text-xs"
                             style={{ color: 'var(--color-text-secondary)' }}
                           >
-                            -{appliedCoupon.percent}%{' '}
-                            {locale === 'ar' ? 'خصم' : 'discount'}
+                            {describeCoupon(appliedCoupon, locale)}
                           </p>
                         </div>
                       </div>
@@ -487,7 +495,6 @@ export default function CartPage() {
                   </div>
                 </div>
 
-                {/* Checkout button */}
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
