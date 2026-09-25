@@ -10,21 +10,11 @@ import { useState, useEffect } from 'react';
 import { useAuth } from './AuthProvider';
 import { useCart } from './CartProvider';
 import { useWishlist } from './WishlistProvider';
-
-const announcements = {
-  ar: [
-    '🚚 شحن مجاني للطلبات فوق 1000 ج.م',
-    '✨ خصم 10% بكود SOVEREIGN10',
-    '🏥 منتجات طبية معتمدة وجودة عالية',
-    '💳 دفع آمن عبر المحفظة الالكترونية - انستاباي - الدفع عند الاستلام'
-  ],
-  en: [
-    '🚚 Free shipping over 1000 EGP',
-    '✨ 10% off with code SOVEREIGN10',
-    '🏥 Certified medical-grade products',
-    '💳 Secure payment via Vodafone Cash'
-  ]
-};
+import {
+  getAnnouncements,
+  AnnouncementsSettings,
+  DEFAULT_ANNOUNCEMENTS
+} from '@/lib/firestore';
 
 export default function Navbar() {
   const t = useTranslations('nav');
@@ -33,31 +23,76 @@ export default function Navbar() {
   const { user, logout, isAdmin } = useAuth();
   const { count } = useCart();
   const { items: wishlistItems } = useWishlist();
+
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [announcementIndex, setAnnouncementIndex] = useState(0);
+
+  const [announcements, setAnnouncements] =
+    useState<AnnouncementsSettings>(DEFAULT_ANNOUNCEMENTS);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
   const other = locale === 'ar' ? 'en' : 'ar';
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // Load announcements from Firestore
+  useEffect(() => {
+    if (!mounted) return;
+
+    const load = () => {
+      getAnnouncements()
+        .then(setAnnouncements)
+        .catch(console.error);
+    };
+
+    load();
+    const interval = setInterval(load, 60000);
+    return () => clearInterval(interval);
+  }, [mounted]);
+
+  // Active announcements
+  const activeAnnouncements = announcements.announcements.filter(
+    (a) => a.active
+  );
+
+  // Rotate announcements
+  useEffect(() => {
+    if (
+      !mounted ||
+      !announcements.enabled ||
+      activeAnnouncements.length === 0
+    ) {
+      return;
+    }
+
+    const speed = announcements.speed > 0 ? announcements.speed : 4;
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % activeAnnouncements.length);
+    }, speed * 1000);
+
+    return () => clearInterval(interval);
+  }, [
+    mounted,
+    announcements.enabled,
+    announcements.speed,
+    activeAnnouncements.length
+  ]);
+
+  // Reset index if out of bounds
+  useEffect(() => {
+    if (currentIndex >= activeAnnouncements.length) {
+      setCurrentIndex(0);
+    }
+  }, [activeAnnouncements.length, currentIndex]);
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
-
-  useEffect(() => {
-    if (!mounted) return;
-    const interval = setInterval(() => {
-      setAnnouncementIndex(
-        (prev) => (prev + 1) % announcements[locale as 'ar' | 'en'].length
-      );
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [locale, mounted]);
 
   const links = [
     { href: `/${locale}`, label: t('home') },
@@ -76,50 +111,63 @@ export default function Navbar() {
     return newPath || `/${other}`;
   };
 
+  const currentAnnouncement =
+    activeAnnouncements[currentIndex] || activeAnnouncements[0];
+
   return (
     <div className="sticky top-0 z-50">
-      {/* Announcement Bar */}
-      <div
-        className="relative py-2 overflow-hidden"
-        style={{
-          background: `linear-gradient(to right, var(--color-secondary-500), var(--color-secondary-600), var(--color-secondary-500))`,
-          color: '#0a1828'
-        }}
-      >
-        <motion.div
-          animate={{ x: ['-100%', '200%'] }}
-          transition={{ duration: 3, repeat: Infinity, repeatDelay: 1 }}
-          className="absolute inset-0 w-32"
+      {/* ============ ANNOUNCEMENT BAR ============ */}
+      {announcements.enabled && currentAnnouncement && (
+        <div
+          className="relative py-2 overflow-hidden transition-colors"
           style={{
-            background:
-              'linear-gradient(to right, transparent, rgba(255, 255, 255, 0.3), transparent)'
+            background: announcements.backgroundColor,
+            color: announcements.textColor
           }}
-        />
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <div className="relative h-5 overflow-hidden">
-            {mounted ? (
-              <AnimatePresence mode="wait">
-                <motion.p
-                  key={announcementIndex}
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: -20, opacity: 0 }}
-                  transition={{ duration: 0.4 }}
-                  className="text-xs md:text-sm font-bold absolute inset-0 flex items-center justify-center"
-                >
-                  {announcements[locale as 'ar' | 'en'][announcementIndex]}
-                </motion.p>
-              </AnimatePresence>
-            ) : (
-              <p className="text-xs md:text-sm font-bold absolute inset-0 flex items-center justify-center">
-                {announcements[locale as 'ar' | 'en'][0]}
-              </p>
-            )}
+        >
+          {/* Shimmer */}
+          <motion.div
+            animate={{ x: ['-100%', '200%'] }}
+            transition={{ duration: 3, repeat: Infinity, repeatDelay: 1 }}
+            className="absolute inset-0 w-32 pointer-events-none"
+            style={{
+              background:
+                'linear-gradient(to right, transparent, rgba(255, 255, 255, 0.3), transparent)'
+            }}
+          />
+
+          <div className="max-w-7xl mx-auto px-4 text-center">
+            <div className="relative h-5 overflow-hidden">
+              {mounted ? (
+                <AnimatePresence mode="wait">
+                  <motion.p
+                    key={currentIndex}
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: -20, opacity: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="text-xs md:text-sm font-bold absolute inset-0 flex items-center justify-center px-2"
+                  >
+                    {currentAnnouncement.emoji}{' '}
+                    {locale === 'ar'
+                      ? currentAnnouncement.textAr
+                      : currentAnnouncement.textEn}
+                  </motion.p>
+                </AnimatePresence>
+              ) : (
+                <p className="text-xs md:text-sm font-bold absolute inset-0 flex items-center justify-center">
+                  {currentAnnouncement.emoji}{' '}
+                  {locale === 'ar'
+                    ? currentAnnouncement.textAr
+                    : currentAnnouncement.textEn}
+                </p>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Main Navbar */}
+      {/* ============ MAIN NAVBAR ============ */}
       <motion.nav
         initial={{ y: -100 }}
         animate={{ y: 0 }}
@@ -136,11 +184,14 @@ export default function Navbar() {
       >
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-between">
           {/* Logo */}
-          <Link href={`/${locale}`} className="flex items-center gap-2 group">
+          <Link
+            href={`/${locale}`}
+            className="flex items-center gap-2 group flex-shrink-0"
+          >
             <motion.img
               src="/logo.png"
               alt="Sovereign"
-              className="h-12 w-auto object-contain"
+              className="h-10 md:h-12 w-auto object-contain"
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.3 }}
               style={{
@@ -150,7 +201,7 @@ export default function Navbar() {
             />
             <div className="hidden sm:flex flex-col">
               <span
-                className="font-black text-lg leading-none"
+                className="font-black text-base md:text-lg leading-none"
                 style={{
                   color: 'var(--color-text-primary)',
                   letterSpacing: '0.15em'
@@ -170,14 +221,15 @@ export default function Navbar() {
             </div>
           </Link>
 
-          <div className="hidden md:flex items-center gap-2">
+          {/* Desktop Links */}
+          <div className="hidden md:flex items-center gap-1 lg:gap-2">
             {links.map((l) => {
               const active = pathname === l.href;
               return (
                 <Link
                   key={l.href}
                   href={l.href}
-                  className={`relative px-4 py-2 rounded-full font-medium transition-all duration-300 ${
+                  className={`relative px-3 lg:px-4 py-2 rounded-full font-medium text-sm transition-all duration-300 ${
                     active ? '' : 'hover:opacity-80'
                   }`}
                   style={{
@@ -200,30 +252,39 @@ export default function Navbar() {
             })}
           </div>
 
-          <div className="flex items-center gap-2">
-            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+          {/* Actions */}
+          <div className="flex items-center gap-1 md:gap-2">
+            {/* Language */}
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
               <Link
                 href={switchLocale()}
                 className="p-2 rounded-full flex items-center gap-1 text-sm transition-all hover:opacity-80"
                 style={{ color: 'var(--color-text-primary)' }}
               >
                 <Globe size={18} />
-                <span className="font-semibold">
+                <span className="font-semibold hidden sm:inline">
                   {locale === 'ar' ? 'EN' : 'ع'}
                 </span>
               </Link>
             </motion.div>
 
-            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+            {/* Wishlist */}
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
               <Link
                 href={`/${locale}/wishlist`}
                 className="relative p-2 rounded-full transition-all hover:opacity-80"
                 style={{ color: 'var(--color-text-primary)' }}
               >
-                <Heart size={22} />
+                <Heart size={20} />
                 {mounted && wishlistItems.length > 0 && (
                   <span
-                    className="absolute -top-1 -right-1 text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold shadow-lg"
+                    className="absolute -top-1 -right-1 text-[10px] rounded-full w-4 h-4 md:w-5 md:h-5 flex items-center justify-center font-bold shadow-lg"
                     style={{ background: '#ef4444', color: '#fff' }}
                   >
                     {wishlistItems.length}
@@ -232,16 +293,20 @@ export default function Navbar() {
               </Link>
             </motion.div>
 
-            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+            {/* Cart */}
+            <motion.div
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
               <Link
                 href={`/${locale}/cart`}
                 className="relative p-2 rounded-full transition-all hover:opacity-80"
                 style={{ color: 'var(--color-text-primary)' }}
               >
-                <ShoppingCart size={22} />
+                <ShoppingCart size={20} />
                 {mounted && count > 0 && (
                   <span
-                    className="absolute -top-1 -right-1 text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold shadow-lg"
+                    className="absolute -top-1 -right-1 text-[10px] rounded-full w-4 h-4 md:w-5 md:h-5 flex items-center justify-center font-bold shadow-lg"
                     style={{
                       background: `linear-gradient(to bottom right, var(--color-secondary-400), var(--color-secondary-600))`,
                       color: '#0a1828'
@@ -253,20 +318,25 @@ export default function Navbar() {
               </Link>
             </motion.div>
 
+            {/* Admin */}
             {mounted && isAdmin && (
-              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+              <motion.div
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
                 <Link
                   href={`/${locale}/admin`}
                   className="p-2 rounded-full transition-all hover:opacity-80"
                   style={{ color: 'var(--color-text-primary)' }}
                 >
-                  <LayoutDashboard size={22} />
+                  <LayoutDashboard size={20} />
                 </Link>
               </motion.div>
             )}
 
+            {/* User */}
             {mounted && user ? (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-0.5">
                 <motion.div
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
@@ -277,7 +347,7 @@ export default function Navbar() {
                     style={{ color: 'var(--color-text-primary)' }}
                     title={t('account')}
                   >
-                    <User size={22} />
+                    <User size={20} />
                   </Link>
                 </motion.div>
                 <motion.button
@@ -288,31 +358,36 @@ export default function Navbar() {
                   style={{ color: 'var(--color-text-primary)' }}
                   title={t('logout')}
                 >
-                  <LogOut size={22} />
+                  <LogOut size={20} />
                 </motion.button>
               </div>
             ) : (
-              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+              <motion.div
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
                 <Link
                   href={`/${locale}/login`}
                   className="p-2 rounded-full transition-all hover:opacity-80"
                   style={{ color: 'var(--color-text-primary)' }}
                 >
-                  <User size={22} />
+                  <User size={20} />
                 </Link>
               </motion.div>
             )}
 
+            {/* Mobile menu toggle */}
             <button
               onClick={() => setOpen(!open)}
               className="md:hidden p-2"
               style={{ color: 'var(--color-text-primary)' }}
             >
-              {open ? <X size={24} /> : <Menu size={24} />}
+              {open ? <X size={22} /> : <Menu size={22} />}
             </button>
           </div>
         </div>
 
+        {/* Mobile Menu */}
         <AnimatePresence>
           {open && (
             <motion.div

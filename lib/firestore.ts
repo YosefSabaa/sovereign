@@ -1,6 +1,6 @@
 import {
   collection, doc, getDoc, getDocs, addDoc, updateDoc, deleteDoc,
-  query, where, limit, serverTimestamp, Timestamp, increment
+  query, where, limit, serverTimestamp, Timestamp, increment, setDoc
 } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -386,4 +386,98 @@ export const isInWishlist = async (
   );
   const snap = await getDocs(q);
   return !snap.empty;
+};
+
+// ==================== ANNOUNCEMENTS ====================
+
+export type Announcement = {
+  id: string;
+  textAr: string;
+  textEn: string;
+  active: boolean;
+  order: number;
+  emoji?: string;
+  createdAt?: Timestamp;
+};
+
+export type AnnouncementsSettings = {
+  enabled: boolean;
+  speed: number;
+  backgroundColor: string;
+  textColor: string;
+  announcements: Announcement[];
+};
+
+export const DEFAULT_ANNOUNCEMENTS: AnnouncementsSettings = {
+  enabled: true,
+  speed: 4,
+  backgroundColor: '#d4af37',
+  textColor: '#0a1828',
+  announcements: [
+    {
+      id: '1',
+      textAr: 'شحن مجاني للطلبات فوق 1000 ج.م',
+      textEn: 'Free shipping over 1000 EGP',
+      emoji: '🚚',
+      active: true,
+      order: 0
+    },
+    {
+      id: '2',
+      textAr: 'خصم 10% بكود SOVEREIGN10',
+      textEn: '10% off with code SOVEREIGN10',
+      emoji: '✨',
+      active: true,
+      order: 1
+    },
+    {
+      id: '3',
+      textAr: 'منتجات طبية معتمدة وجودة عالية',
+      textEn: 'Certified medical-grade products',
+      emoji: '🏥',
+      active: true,
+      order: 2
+    },
+    {
+      id: '4',
+      textAr: 'دفع آمن عبر المحفظة الإلكترونية',
+      textEn: 'Secure payment via e-wallet',
+      emoji: '💳',
+      active: true,
+      order: 3
+    }
+  ]
+};
+
+export const getAnnouncements = async (): Promise<AnnouncementsSettings> => {
+  try {
+    const ref = doc(db, 'settings', 'announcements');
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      const data = snap.data();
+      return {
+        ...DEFAULT_ANNOUNCEMENTS,
+        ...data,
+        announcements:
+          data.announcements || DEFAULT_ANNOUNCEMENTS.announcements
+      } as AnnouncementsSettings;
+    }
+    return DEFAULT_ANNOUNCEMENTS;
+  } catch {
+    return DEFAULT_ANNOUNCEMENTS;
+  }
+};
+
+export const saveAnnouncements = async (
+  settings: AnnouncementsSettings
+) => {
+  const ref = doc(db, 'settings', 'announcements');
+  await setDoc(
+    ref,
+    {
+      ...cleanUndefined(settings),
+      updatedAt: serverTimestamp()
+    },
+    { merge: true }
+  );
 };
