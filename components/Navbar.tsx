@@ -131,27 +131,39 @@ export default function Navbar() {
         }}
       >
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-between">
-          <Link href={`/${locale}`} className="flex items-center gap-3 group">
-            <motion.div
-              whileHover={{ rotate: 360, scale: 1.1 }}
-              transition={{ duration: 0.6 }}
-              className="h-10 w-10 rounded-full flex items-center justify-center shadow-lg glow-pulse"
+          {/* Logo */}
+          <Link href={`/${locale}`} className="flex items-center gap-2 group">
+            <motion.img
+              src="/logo.png"
+              alt="Sovereign"
+              className="h-12 w-auto object-contain"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.3 }}
               style={{
-                background: `linear-gradient(to bottom right, var(--color-secondary-500), var(--color-secondary-600))`
+                filter:
+                  'brightness(0) invert(1) drop-shadow(0 0 10px rgba(212, 175, 55, 0.3))'
               }}
-            >
-              <Heart
-                size={20}
-                className="fill-current"
-                style={{ color: '#0a1828' }}
-              />
-            </motion.div>
-            <span
-              className="font-black text-xl tracking-wide"
-              style={{ color: 'var(--color-text-primary)' }}
-            >
-              Sovereign
-            </span>
+            />
+            <div className="hidden sm:flex flex-col">
+              <span
+                className="font-black text-lg leading-none"
+                style={{
+                  color: 'var(--color-text-primary)',
+                  letterSpacing: '0.15em'
+                }}
+              >
+                SOVEREIGN
+              </span>
+              <span
+                className="text-[8px] leading-none mt-0.5 font-semibold"
+                style={{
+                  color: 'var(--color-secondary-500)',
+                  letterSpacing: '0.3em'
+                }}
+              >
+                MEDICAL
+              </span>
+            </div>
           </Link>
 
           <div className="hidden md:flex items-center gap-2">

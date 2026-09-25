@@ -34,36 +34,116 @@ export default function HomePage() {
 
   useEffect(() => {
     getProducts()
-      .then(p => { setProducts(p); setLoading(false); })
+      .then((p) => {
+        setProducts(p);
+        setLoading(false);
+      })
       .catch(() => setLoading(false));
   }, []);
 
   const Arrow = locale === 'ar' ? ArrowLeft : ArrowRight;
 
   const features = [
-    { icon: Stethoscope, title: t('features.quality'), desc: t('features.qualityDesc'), gradient: 'from-teal-400 to-teal-600' },
-    { icon: Truck, title: t('features.shipping'), desc: t('features.shippingDesc'), gradient: 'from-blue-400 to-blue-600' },
-    { icon: Headphones, title: t('features.support'), desc: t('features.supportDesc'), gradient: 'from-purple-400 to-purple-600' },
-    { icon: ShieldCheck, title: t('features.payment'), desc: t('features.paymentDesc'), gradient: 'from-green-400 to-green-600' }
+    {
+      icon: Stethoscope,
+      title: t('features.quality'),
+      desc: t('features.qualityDesc'),
+      gradient: 'from-teal-400 to-teal-600'
+    },
+    {
+      icon: Truck,
+      title: t('features.shipping'),
+      desc: t('features.shippingDesc'),
+      gradient: 'from-blue-400 to-blue-600'
+    },
+    {
+      icon: Headphones,
+      title: t('features.support'),
+      desc: t('features.supportDesc'),
+      gradient: 'from-purple-400 to-purple-600'
+    },
+    {
+      icon: ShieldCheck,
+      title: t('features.payment'),
+      desc: t('features.paymentDesc'),
+      gradient: 'from-green-400 to-green-600'
+    }
   ];
 
   return (
     <div className="overflow-hidden">
-      {/* HERO */}
-      <section className="relative min-h-[90vh] flex items-center px-4 overflow-hidden">
+      {/* ============ HERO ============ */}
+      <section className="relative min-h-screen flex items-center px-4 overflow-hidden">
         <MedicalBackground />
+
+        {/* اللوجو الكبير كخلفية */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 0.08, scale: 1 }}
+          transition={{ duration: 2, ease: 'easeOut' }}
+          className="absolute inset-0 flex items-center justify-center pointer-events-none z-[1]"
+        >
+          <img
+            src="/logo.png"
+            alt=""
+            className="w-[80%] max-w-[900px] h-auto object-contain"
+            style={{
+              filter: 'brightness(0) invert(1)',
+              opacity: 0.08
+            }}
+          />
+        </motion.div>
+
+        {/* Decorative orbs */}
+        <div className="absolute inset-0 pointer-events-none z-[2]">
+          <motion.div
+            animate={{
+              x: [0, 50, 0],
+              y: [0, 30, 0],
+              scale: [1, 1.1, 1]
+            }}
+            transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
+            className="absolute top-20 right-20 w-96 h-96 rounded-full blur-3xl opacity-20"
+            style={{ background: 'var(--color-secondary-500)' }}
+          />
+          <motion.div
+            animate={{
+              x: [0, -50, 0],
+              y: [0, -30, 0],
+              scale: [1, 1.2, 1]
+            }}
+            transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+            className="absolute bottom-20 left-20 w-96 h-96 rounded-full blur-3xl opacity-20"
+            style={{ background: 'var(--color-primary-500)' }}
+          />
+        </div>
 
         <motion.div
           style={{ y: heroY, opacity: heroOpacity }}
           className="max-w-7xl mx-auto grid md:grid-cols-2 gap-12 items-center relative z-10 py-20"
         >
-          <motion.div initial="hidden" animate="visible" variants={staggerContainer}>
+          {/* Text content */}
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={staggerContainer}
+          >
             <motion.div variants={fadeInUp}>
               <motion.span
                 animate={heartbeat}
-                className="inline-flex items-center gap-2 bg-teal-500/20 backdrop-blur-sm border border-teal-400/50 text-teal-200 px-5 py-2 rounded-full text-sm font-semibold mb-6"
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold mb-6"
+                style={{
+                  background: 'rgba(212, 175, 55, 0.15)',
+                  border: '1px solid rgba(212, 175, 55, 0.4)',
+                  color: 'var(--color-secondary-500)',
+                  backdropFilter: 'blur(10px)'
+                }}
               >
-                <Heart size={16} className="fill-teal-300 text-teal-300" />
+                <Heart
+                  size={16}
+                  className="fill-current"
+                  style={{ color: 'var(--color-secondary-500)' }}
+                />
                 {t('hero.badge')}
               </motion.span>
             </motion.div>
@@ -91,6 +171,7 @@ export default function HomePage() {
                   <Arrow size={20} />
                 </Link>
               </motion.div>
+
               <motion.a
                 href="#features"
                 whileHover={{ scale: 1.05 }}
@@ -101,27 +182,49 @@ export default function HomePage() {
               </motion.a>
             </motion.div>
 
+            {/* Trust indicators */}
             <motion.div
               variants={fadeInUp}
-              className="flex items-center gap-6 mt-10 pt-8"
+              className="flex items-center gap-6 mt-10 pt-8 flex-wrap"
               style={{ borderTop: '1px solid rgba(212, 175, 55, 0.2)' }}
             >
               <div>
-                <p className="text-3xl font-black" style={{ color: 'var(--color-text-primary)' }}>5000+</p>
+                <p
+                  className="text-3xl font-black"
+                  style={{ color: 'var(--color-text-primary)' }}
+                >
+                  5000+
+                </p>
                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
                   {locale === 'ar' ? 'طالب طب' : 'Students'}
                 </p>
               </div>
-              <div className="w-px h-12" style={{ background: 'rgba(212, 175, 55, 0.2)' }} />
+              <div
+                className="w-px h-12"
+                style={{ background: 'rgba(212, 175, 55, 0.2)' }}
+              />
               <div>
-                <p className="text-3xl font-black" style={{ color: 'var(--color-text-primary)' }}>4.9</p>
+                <p
+                  className="text-3xl font-black"
+                  style={{ color: 'var(--color-text-primary)' }}
+                >
+                  4.9
+                </p>
                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
                   {locale === 'ar' ? 'تقييم' : 'Rating'}
                 </p>
               </div>
-              <div className="w-px h-12" style={{ background: 'rgba(212, 175, 55, 0.2)' }} />
+              <div
+                className="w-px h-12"
+                style={{ background: 'rgba(212, 175, 55, 0.2)' }}
+              />
               <div>
-                <p className="text-3xl font-black" style={{ color: 'var(--color-text-primary)' }}>24/7</p>
+                <p
+                  className="text-3xl font-black"
+                  style={{ color: 'var(--color-text-primary)' }}
+                >
+                  24/7
+                </p>
                 <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
                   {locale === 'ar' ? 'دعم' : 'Support'}
                 </p>
@@ -129,18 +232,24 @@ export default function HomePage() {
             </motion.div>
           </motion.div>
 
+          {/* اللوجو الكبير على اليمين */}
           <motion.div
             initial="hidden"
             animate="visible"
             variants={fadeInRight}
-            className="hidden md:flex justify-center relative"
+            className="hidden md:flex justify-center items-center relative"
           >
-            <div className="relative w-96 h-96">
+            <div className="relative w-[500px] h-[500px] flex items-center justify-center">
+              {/* Rotating rings */}
               <motion.div
-                className="absolute inset-0 rounded-full"
-                style={{ border: '4px solid rgba(212, 175, 55, 0.3)' }}
+                className="absolute rounded-full"
+                style={{
+                  border: '4px solid rgba(212, 175, 55, 0.3)',
+                  width: '520px',
+                  height: '520px'
+                }}
                 animate={{ rotate: 360 }}
-                transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
+                transition={{ duration: 40, repeat: Infinity, ease: 'linear' }}
               >
                 <div
                   className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full shadow-lg"
@@ -149,55 +258,125 @@ export default function HomePage() {
               </motion.div>
 
               <motion.div
-                className="absolute inset-6 rounded-full"
-                style={{ border: '4px dashed rgba(212, 175, 55, 0.2)' }}
+                className="absolute rounded-full"
+                style={{
+                  border: '4px dashed rgba(212, 175, 55, 0.15)',
+                  width: '460px',
+                  height: '460px'
+                }}
                 animate={{ rotate: -360 }}
-                transition={{ duration: 40, repeat: Infinity, ease: 'linear' }}
+                transition={{ duration: 50, repeat: Infinity, ease: 'linear' }}
               />
 
+              {/* Glow */}
               <motion.div
-                className="absolute inset-16 rounded-full backdrop-blur-md flex items-center justify-center shadow-2xl glow-pulse"
+                className="absolute rounded-full blur-3xl"
                 style={{
-                  background: 'linear-gradient(to bottom right, rgba(212, 175, 55, 0.2), rgba(30, 58, 95, 0.4))',
-                  border: '2px solid rgba(212, 175, 55, 0.5)'
+                  background: `radial-gradient(circle, var(--color-secondary-500) 0%, transparent 70%)`,
+                  width: '400px',
+                  height: '400px',
+                  opacity: 0.15
                 }}
-                animate={{ scale: [1, 1.05, 1] }}
-                transition={{ duration: 3, repeat: Infinity }}
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 4, repeat: Infinity }}
+              />
+
+              {/* اللوجو الرئيسي */}
+              <motion.div
+                animate={{ y: [0, -15, 0] }}
+                transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+                className="relative z-10"
               >
-                <motion.div
-                  animate={{ rotate: [0, 5, -5, 0] }}
-                  transition={{ duration: 4, repeat: Infinity }}
-                >
-                  <Stethoscope size={140} style={{ color: 'var(--color-secondary-400)' }} strokeWidth={1.5} />
-                </motion.div>
+                <img
+                  src="/logo.png"
+                  alt="Sovereign"
+                  className="w-[320px] h-auto object-contain drop-shadow-2xl"
+                  style={{
+                    filter:
+                      'brightness(0) invert(1) drop-shadow(0 0 40px rgba(212, 175, 55, 0.4))'
+                  }}
+                />
               </motion.div>
 
+              {/* Floating medical icons */}
               {[
-                { Icon: Heart, delay: 0, position: 'top-0 right-8', color: 'text-red-400' },
-                { Icon: Activity, delay: 1, position: 'bottom-8 left-0', color: 'text-blue-400' },
-                { Icon: Microscope, delay: 2, position: 'top-1/3 -left-8', color: 'text-purple-400' },
-                { Icon: Pill, delay: 1.5, position: 'bottom-0 right-12', color: 'text-green-400' },
-                { Icon: Syringe, delay: 0.7, position: 'top-1/4 -right-4', color: 'text-pink-400' }
-              ].map(({ Icon, delay, position, color }, i) => (
+                {
+                  icon: Heart,
+                  delay: 0,
+                  position: 'top-0 right-0',
+                  color: '#ef4444'
+                },
+                {
+                  icon: Activity,
+                  delay: 1,
+                  position: 'bottom-0 left-0',
+                  color: '#3b82f6'
+                },
+                {
+                  icon: Microscope,
+                  delay: 2,
+                  position: 'top-1/3 -left-12',
+                  color: '#8b5cf6'
+                },
+                {
+                  icon: Pill,
+                  delay: 1.5,
+                  position: 'bottom-1/4 -right-8',
+                  color: '#10b981'
+                },
+                {
+                  icon: Syringe,
+                  delay: 0.7,
+                  position: 'top-1/4 -right-12',
+                  color: '#ec4899'
+                }
+              ].map(({ icon: Icon, delay, position, color }, i) => (
                 <motion.div
                   key={i}
-                  className={`absolute ${position} w-14 h-14 rounded-full backdrop-blur-md flex items-center justify-center shadow-xl`}
+                  className={`absolute ${position} w-14 h-14 rounded-full flex items-center justify-center shadow-xl`}
                   style={{
-                    background: 'rgba(26, 47, 77, 0.6)',
-                    border: '1px solid rgba(212, 175, 55, 0.3)'
+                    background: 'rgba(26, 47, 77, 0.8)',
+                    border: '1px solid rgba(212, 175, 55, 0.3)',
+                    backdropFilter: 'blur(10px)'
                   }}
-                  animate={{ y: [0, -20, 0], scale: [1, 1.1, 1] }}
-                  transition={{ duration: 3, repeat: Infinity, delay }}
+                  animate={{
+                    y: [0, -20, 0],
+                    scale: [1, 1.1, 1]
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    delay
+                  }}
                 >
-                  <Icon size={24} className={color} />
+                  <Icon size={24} style={{ color }} />
                 </motion.div>
               ))}
             </div>
           </motion.div>
         </motion.div>
+
+        {/* Scroll indicator */}
+        <motion.div
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
+          animate={{ y: [0, 10, 0] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+        >
+          <div
+            className="w-6 h-10 rounded-full flex items-start justify-center p-2"
+            style={{ border: '2px solid rgba(212, 175, 55, 0.4)' }}
+          >
+            <motion.div
+              className="w-1.5 h-1.5 rounded-full"
+              style={{ background: 'var(--color-secondary-500)' }}
+              animate={{ y: [0, 12, 0] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            />
+          </div>
+        </motion.div>
       </section>
 
-      {/* FEATURES */}
+      {/* ============ FEATURES ============ */}
       <section
         id="features"
         className="relative py-24 px-4 overflow-hidden"
@@ -216,7 +395,10 @@ export default function HomePage() {
             <motion.div variants={fadeInUp} className="flex items-center justify-center gap-3 mb-4">
               <div
                 className="h-1 w-12 rounded-full"
-                style={{ background: 'linear-gradient(to right, transparent, var(--color-secondary-500))' }}
+                style={{
+                  background:
+                    'linear-gradient(to right, transparent, var(--color-secondary-500))'
+                }}
               />
               <Heart
                 size={20}
@@ -225,7 +407,10 @@ export default function HomePage() {
               />
               <div
                 className="h-1 w-12 rounded-full"
-                style={{ background: 'linear-gradient(to left, transparent, var(--color-secondary-500))' }}
+                style={{
+                  background:
+                    'linear-gradient(to left, transparent, var(--color-secondary-500))'
+                }}
               />
             </motion.div>
 
@@ -302,10 +487,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CATEGORIES */}
+      {/* ============ CATEGORIES ============ */}
       <CategoriesSection />
 
-      {/* FEATURED PRODUCTS */}
+      {/* ============ FEATURED PRODUCTS ============ */}
       <section
         className="relative py-24 px-4 overflow-hidden"
         style={{ background: 'var(--color-bg-base)' }}
@@ -321,14 +506,21 @@ export default function HomePage() {
             <motion.div variants={fadeInUp} className="flex items-center justify-center gap-3 mb-4">
               <div
                 className="h-1 w-12 rounded-full"
-                style={{ background: 'linear-gradient(to right, transparent, var(--color-secondary-500))' }}
+                style={{
+                  background:
+                    'linear-gradient(to right, transparent, var(--color-secondary-500))'
+                }}
               />
               <Activity size={20} style={{ color: 'var(--color-secondary-500)' }} />
               <div
                 className="h-1 w-12 rounded-full"
-                style={{ background: 'linear-gradient(to left, transparent, var(--color-secondary-500))' }}
+                style={{
+                  background:
+                    'linear-gradient(to left, transparent, var(--color-secondary-500))'
+                }}
               />
             </motion.div>
+
             <motion.h2
               variants={fadeInUp}
               className="text-4xl md:text-5xl font-black mb-4"
@@ -336,6 +528,7 @@ export default function HomePage() {
             >
               {t('sections.featured')}
             </motion.h2>
+
             <motion.p
               variants={fadeInUp}
               className="text-lg max-w-2xl mx-auto"
@@ -363,7 +556,11 @@ export default function HomePage() {
               animate={{ opacity: 1, y: 0 }}
               className="text-center py-20"
             >
-              <Package size={80} className="mx-auto mb-4" style={{ color: 'var(--color-text-muted)' }} />
+              <Package
+                size={80}
+                className="mx-auto mb-4"
+                style={{ color: 'var(--color-text-muted)' }}
+              />
               <p className="text-lg" style={{ color: 'var(--color-text-secondary)' }}>
                 {locale === 'ar' ? 'لا توجد منتجات بعد' : 'No products yet'}
               </p>
@@ -402,22 +599,22 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* STATS */}
+      {/* ============ STATS ============ */}
       <StatsSection />
 
-      {/* BRAND STORY */}
+      {/* ============ BRAND STORY ============ */}
       <BrandStorySection />
 
-      {/* TESTIMONIALS */}
+      {/* ============ TESTIMONIALS ============ */}
       <TestimonialsSection />
 
-      {/* FAQ */}
+      {/* ============ FAQ ============ */}
       <FAQSection />
 
-      {/* NEWSLETTER / WHATSAPP */}
+      {/* ============ NEWSLETTER ============ */}
       <NewsletterSection />
 
-      {/* CTA */}
+      {/* ============ CTA ============ */}
       <section className="relative py-24 px-4 overflow-hidden">
         <div
           className="absolute inset-0"
@@ -436,7 +633,7 @@ export default function HomePage() {
           >
             <motion.div
               animate={heartbeat}
-              className="w-20 h-20 rounded-full backdrop-blur-md flex items-center justify-center mx-auto"
+              className="w-20 h-20 rounded-full flex items-center justify-center mx-auto"
               style={{
                 background: 'rgba(255, 255, 255, 0.15)',
                 border: '1px solid rgba(255, 255, 255, 0.3)'
@@ -452,7 +649,9 @@ export default function HomePage() {
             viewport={{ once: true }}
             className="text-4xl md:text-5xl font-black text-white mb-6"
           >
-            {locale === 'ar' ? 'ابدأ رحلتك الطبية معنا' : 'Start Your Medical Journey'}
+            {locale === 'ar'
+              ? 'ابدأ رحلتك الطبية معنا'
+              : 'Start Your Medical Journey'}
           </motion.h2>
 
           <motion.p

@@ -9,9 +9,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useAuth } from '@/components/AuthProvider';
+import { phoneToEmail, isValidEgyptianPhone } from '@/lib/phoneAuth';
 import PageTransition from '@/components/PageTransition';
 import {
-  LogIn, Mail, Lock, Eye, EyeOff, AlertCircle, Stethoscope, Heart
+  LogIn, Lock, Phone, Eye, EyeOff, AlertCircle, Heart
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { fadeInUp, staggerContainer, staggerItem, heartbeat } from '@/lib/animations';
@@ -23,7 +24,7 @@ function LoginForm() {
   const params = useSearchParams();
   const { user } = useAuth();
 
-  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -41,20 +42,35 @@ function LoginForm() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!isValidEgyptianPhone(phone)) {
+      const msg = locale === 'ar'
+        ? 'أدخل رقم هاتف مصري صحيح'
+        : 'Enter a valid Egyptian phone';
+      setError(msg);
+      toast.error(msg);
+      return;
+    }
+
     setLoading(true);
     try {
+      const email = phoneToEmail(phone);
       await signInWithEmailAndPassword(auth, email, password);
-      toast.success(t('auth.loginSuccess'));
+      toast.success(locale === 'ar' ? 'تم تسجيل الدخول ✓' : 'Logged in ✓');
       router.replace(target);
     } catch (err: any) {
-      const msg =
+      let msg = t('auth.error');
+
+      if (
         err.code === 'auth/invalid-credential' ||
         err.code === 'auth/wrong-password' ||
         err.code === 'auth/user-not-found'
-          ? locale === 'ar'
-            ? 'الإيميل أو كلمة المرور غير صحيحة'
-            : 'Invalid email or password'
-          : err.message || t('auth.error');
+      ) {
+        msg = locale === 'ar'
+          ? 'رقم الهاتف أو كلمة المرور غير صحيحة'
+          : 'Invalid phone or password';
+      }
+
       setError(msg);
       toast.error(msg);
     } finally {
@@ -65,19 +81,14 @@ function LoginForm() {
   return (
     <PageTransition>
       <div className="min-h-[85vh] flex items-center justify-center px-4 py-10 relative overflow-hidden">
-        {/* Background */}
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-20 left-20 w-72 h-72 bg-teal-200/30 rounded-full blur-3xl" />
-          <div className="absolute bottom-20 right-20 w-72 h-72 bg-navy-200/30 rounded-full blur-3xl" />
           <div
-            className="absolute inset-0 opacity-[0.02]"
-            style={{
-              backgroundImage: `
-                linear-gradient(to right, #1e3a5f 1px, transparent 1px),
-                linear-gradient(to bottom, #1e3a5f 1px, transparent 1px)
-              `,
-              backgroundSize: '40px 40px'
-            }}
+            className="absolute top-20 left-20 w-72 h-72 rounded-full blur-3xl opacity-20"
+            style={{ background: 'var(--color-secondary-500)' }}
+          />
+          <div
+            className="absolute bottom-20 right-20 w-72 h-72 rounded-full blur-3xl opacity-20"
+            style={{ background: 'var(--color-primary-500)' }}
           />
         </div>
 
@@ -89,23 +100,31 @@ function LoginForm() {
         >
           <motion.div
             variants={staggerItem}
-            className="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100"
+            className="rounded-3xl shadow-2xl p-8"
+            style={{
+              background: 'var(--color-bg-card)',
+              border: '1px solid rgba(212, 175, 55, 0.2)'
+            }}
           >
             {/* Header */}
             <div className="text-center mb-8">
               <motion.div
                 animate={heartbeat}
-                className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center mb-5 shadow-xl glow-pulse"
+                className="w-20 h-20 mx-auto rounded-2xl flex items-center justify-center mb-5 shadow-xl glow-pulse"
+                style={{
+                  background: `linear-gradient(to bottom right, var(--color-secondary-500), var(--color-secondary-600))`
+                }}
               >
-                <LogIn size={36} className="text-white" />
+                <LogIn size={36} style={{ color: '#0a1828' }} />
               </motion.div>
-              <h1 className="text-2xl font-black text-navy-700 mb-2">
+              <h1
+                className="text-2xl font-black mb-2"
+                style={{ color: 'var(--color-text-primary)' }}
+              >
                 {t('auth.login')}
               </h1>
-              <p className="text-gray-500 text-sm">
-                {locale === 'ar'
-                  ? 'أهلاً بك مجدداً في Sovereign'
-                  : 'Welcome back to Sovereign'}
+              <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                {locale === 'ar' ? 'أهلاً بك مجدداً' : 'Welcome back'}
               </p>
             </div>
 
@@ -116,51 +135,71 @@ function LoginForm() {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="bg-red-50 border-2 border-red-200 rounded-xl p-3 mb-5 flex items-start gap-2"
+                  className="rounded-xl p-3 mb-5 flex items-start gap-2"
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    border: '2px solid rgba(239, 68, 68, 0.3)'
+                  }}
                 >
                   <AlertCircle
                     size={18}
-                    className="text-red-600 flex-shrink-0 mt-0.5"
+                    style={{ color: '#ef4444', flexShrink: 0, marginTop: 2 }}
                   />
-                  <p className="text-sm text-red-700 font-medium">{error}</p>
+                  <p className="text-sm font-medium" style={{ color: '#ef4444' }}>
+                    {error}
+                  </p>
                 </motion.div>
               )}
             </AnimatePresence>
 
             {/* Form */}
             <form onSubmit={submit} className="space-y-5">
+              {/* رقم الهاتف */}
               <motion.div variants={fadeInUp}>
-                <label className="label flex items-center gap-2">
-                  <Mail size={14} className="text-teal-500" />
-                  {t('auth.email')}
+                <label
+                  className="label flex items-center gap-2"
+                  style={{ color: 'var(--color-text-secondary)' }}
+                >
+                  <Phone size={14} style={{ color: 'var(--color-secondary-500)' }} />
+                  {t('auth.phone')}
                 </label>
                 <div className="relative">
                   <input
-                    type="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => {
+                      const cleaned = e.target.value.replace(/[^0-9]/g, '');
+                      setPhone(cleaned.slice(0, 11));
+                    }}
                     required
                     className="input pl-11"
                     dir="ltr"
-                    placeholder="you@example.com"
+                    placeholder="01XXXXXXXXX"
+                    inputMode="numeric"
+                    maxLength={11}
                   />
-                  <Mail
+                  <Phone
                     size={18}
-                    className="absolute top-1/2 -translate-y-1/2 left-4 text-gray-400 pointer-events-none"
+                    className="absolute top-1/2 -translate-y-1/2 left-4 pointer-events-none"
+                    style={{ color: 'var(--color-text-muted)' }}
                   />
                 </div>
               </motion.div>
 
+              {/* كلمة المرور */}
               <motion.div variants={fadeInUp}>
-                <label className="label flex items-center gap-2">
-                  <Lock size={14} className="text-teal-500" />
+                <label
+                  className="label flex items-center gap-2"
+                  style={{ color: 'var(--color-text-secondary)' }}
+                >
+                  <Lock size={14} style={{ color: 'var(--color-secondary-500)' }} />
                   {t('auth.password')}
                 </label>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
                     value={password}
-                    onChange={e => setPassword(e.target.value)}
+                    onChange={(e) => setPassword(e.target.value)}
                     required
                     minLength={6}
                     className="input pl-11 pr-11"
@@ -169,12 +208,14 @@ function LoginForm() {
                   />
                   <Lock
                     size={18}
-                    className="absolute top-1/2 -translate-y-1/2 left-4 text-gray-400 pointer-events-none"
+                    className="absolute top-1/2 -translate-y-1/2 left-4 pointer-events-none"
+                    style={{ color: 'var(--color-text-muted)' }}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute top-1/2 -translate-y-1/2 right-4 text-gray-400 hover:text-teal-500 transition-colors"
+                    className="absolute top-1/2 -translate-y-1/2 right-4"
+                    style={{ color: 'var(--color-text-muted)' }}
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
@@ -191,7 +232,7 @@ function LoginForm() {
               >
                 {loading ? (
                   <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
                     {t('common.loading')}
                   </>
                 ) : (
@@ -206,41 +247,50 @@ function LoginForm() {
             {/* Divider */}
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200"></div>
+                <div
+                  className="w-full"
+                  style={{ borderTop: '1px solid rgba(212, 175, 55, 0.2)' }}
+                />
               </div>
               <div className="relative flex justify-center text-xs">
-                <span className="bg-white px-3 text-gray-400 font-semibold">
+                <span
+                  className="px-3 font-semibold"
+                  style={{
+                    background: 'var(--color-bg-card)',
+                    color: 'var(--color-text-muted)'
+                  }}
+                >
                   {locale === 'ar' ? 'أو' : 'OR'}
                 </span>
               </div>
             </div>
 
-            {/* Register link */}
-            <p className="text-center text-sm text-gray-600">
+            <p
+              className="text-center text-sm"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
               {t('auth.noAccount')}{' '}
               <Link
                 href={`/${locale}/register`}
-                className="text-teal-600 hover:text-teal-700 font-bold hover:underline transition-colors"
+                className="font-bold hover:underline"
+                style={{ color: 'var(--color-secondary-500)' }}
               >
                 {t('auth.register')}
               </Link>
             </p>
           </motion.div>
 
-          {/* Decorative medical icons */}
+          {/* Decorative */}
           <motion.div
             variants={staggerItem}
-            className="flex justify-center gap-6 mt-8 text-teal-500/40"
+            className="flex justify-center gap-6 mt-8"
+            style={{ color: 'var(--color-secondary-500)', opacity: 0.3 }}
           >
-            {[Stethoscope, Heart, Stethoscope].map((Icon, i) => (
+            {[Heart, Heart, Heart].map((Icon, i) => (
               <motion.div
                 key={i}
                 animate={{ y: [0, -10, 0], rotate: [0, 5, -5, 0] }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  delay: i * 0.3
-                }}
+                transition={{ duration: 3, repeat: Infinity, delay: i * 0.3 }}
               >
                 <Icon size={24} />
               </motion.div>
@@ -254,13 +304,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
-        </div>
-      }
-    >
+    <Suspense fallback={<div className="min-h-screen" />}>
       <LoginForm />
     </Suspense>
   );
