@@ -392,7 +392,7 @@ export default function ContactPage() {
                       className="text-xs"
                       style={{ color: 'var(--color-text-secondary)' }}
                     >
-                      {locale === 'ar' ? 'القاهرة، مصر' : 'Cairo, Egypt'}
+                      {locale === 'ar' ? 'الدقهلية، مصر' : 'Dakahlia, Egypt'}
                     </p>
                   </div>
                 </div>

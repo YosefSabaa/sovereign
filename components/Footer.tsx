@@ -235,7 +235,7 @@ export default function Footer() {
                 className="flex-shrink-0"
                 style={{ color: 'var(--color-secondary-500)' }}
               />
-              <span>{locale === 'ar' ? 'القاهرة، مصر' : 'Cairo, Egypt'}</span>
+              <span>{locale === 'ar' ? 'الدقهلية، مصر' : 'Dakahlia, Egypt'}</span>
             </div>
 
             {/* Instagram */}

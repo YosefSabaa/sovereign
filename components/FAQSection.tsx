@@ -8,9 +8,9 @@ import { staggerContainer, staggerItem } from '@/lib/animations';
 const FAQS = [
   {
     qAr: 'كم تستغرق مدة الشحن؟',
-    aAr: 'التوصيل داخل القاهرة والجيزة خلال 24-48 ساعة. المحافظات الأخرى خلال 2-4 أيام عمل.',
+    aAr: 'التوصيل داخل الدقهلية ودمياط خلال 24-48 ساعة. المحافظات الأخرى خلال 2-4 أيام عمل.',
     qEn: 'How long does shipping take?',
-    aEn: 'Delivery within Cairo and Giza takes 24-48 hours. Other governorates take 2-4 business days.'
+    aEn: 'Delivery within Dakahlia and Damietta takes 24-48 hours. Other governorates take 2-4 business days.'
   },
   {
     qAr: 'ما هي طرق الدفع المتاحة؟',

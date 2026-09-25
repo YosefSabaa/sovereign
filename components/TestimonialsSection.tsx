@@ -8,8 +8,8 @@ const TESTIMONIALS = [
   {
     nameAr: 'د. أحمد محمود',
     nameEn: 'Dr. Ahmed Mahmoud',
-    roleAr: 'طالب بكلية الطب - القاهرة',
-    roleEn: 'Medical Student - Cairo',
+    roleAr: 'طالب بكلية الطب - الدقهلية',
+    roleEn: 'Medical Student - Dakahlia',
     commentAr: 'جودة السكرابات ممتازة والألوان بتدوم حتى بعد الغسيل المتكرر. أنصح كل زمايلي.',
     commentEn: 'Amazing quality scrubs, colors last through multiple washes. Highly recommend to all my colleagues.',
     rating: 5,
