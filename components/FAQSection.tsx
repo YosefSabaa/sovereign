@@ -14,7 +14,7 @@ const FAQS = [
   },
   {
     qAr: 'ما هي طرق الدفع المتاحة؟',
-    aAr: 'الدفع عبر فودافون كاش فقط حالياً. قم بالتحويل ثم ارفع صورة الإيصال وسيتم تأكيد الطلب خلال ساعات.',
+    aAr: 'الدفع عبر المحافظ الالكترونية - انستاباي - عند الاستلام. قم بالتحويل ثم ارفع صورة الإيصال وسيتم تأكيد الطلب خلال ساعات.',
     qEn: 'What payment methods do you accept?',
     aEn: 'Only Vodafone Cash for now. Transfer the amount, upload the receipt, and we will confirm your order within hours.'
   },

@@ -107,7 +107,7 @@ export default function ContactPage() {
       icon: ShieldCheck,
       titleAr: 'دفع آمن',
       titleEn: 'Secure Payment',
-      descAr: 'فودافون كاش • إنستاباي • عند الاستلام',
+      descAr: 'محفظة الكترونية • إنستاباي • عند الاستلام',
       descEn: 'Vodafone Cash • InstaPay • COD',
       gradient: 'from-purple-400 to-purple-600'
     },
