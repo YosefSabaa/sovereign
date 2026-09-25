@@ -4,16 +4,22 @@ import { usePathname } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useAuth } from '@/components/AuthProvider';
 import {
-  LayoutDashboard, Package, ShoppingCart, Tag, Palette
+  LayoutDashboard, Package, ShoppingCart, Tag, Palette,
+  Sparkles, Menu, X
 } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default function AdminLayout({
+  children
+}: {
+  children: React.ReactNode;
+}) {
   const locale = useLocale();
   const t = useTranslations();
   const pathname = usePathname();
   const { user, isAdmin, loading } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && (!user || !isAdmin)) {
@@ -21,50 +27,135 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }, [loading, user, isAdmin, t]);
 
-  if (loading) return <div className="text-center py-20">{t('common.loading')}</div>;
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname]);
+
+  if (loading) {
+    return (
+      <div
+        className="text-center py-20"
+        style={{ color: 'var(--color-text-muted)' }}
+      >
+        {t('common.loading')}
+      </div>
+    );
+  }
 
   if (!user || !isAdmin) {
     return (
       <div className="max-w-md mx-auto px-4 py-20 text-center">
-        <h1 className="text-2xl font-bold text-red-500 mb-4">
+        <h1
+          className="text-2xl font-bold mb-4"
+          style={{ color: '#ef4444' }}
+        >
           {t('admin.notAuthorized')}
         </h1>
-        <Link href={`/${locale}/login?redirect=/admin`} className="btn-primary inline-flex">
+        <Link
+          href={`/${locale}/login?redirect=/admin`}
+          className="btn-primary inline-flex"
+        >
           {t('nav.login')}
         </Link>
       </div>
     );
   }
 
+  // ✅ القائمة الكاملة
   const links = [
-    { href: `/${locale}/admin`, label: t('admin.dashboard'), icon: LayoutDashboard, exact: true },
-    { href: `/${locale}/admin/products`, label: t('admin.products'), icon: Package },
-    { href: `/${locale}/admin/orders`, label: t('admin.orders'), icon: ShoppingCart },
-    { href: `/${locale}/admin/coupons`, label: t('admin.coupons'), icon: Tag },
+    {
+      href: `/${locale}/admin`,
+      label: t('admin.dashboard'),
+      icon: LayoutDashboard,
+      exact: true
+    },
+    {
+      href: `/${locale}/admin/products`,
+      label: t('admin.products'),
+      icon: Package
+    },
+    {
+      href: `/${locale}/admin/orders`,
+      label: t('admin.orders'),
+      icon: ShoppingCart
+    },
+    {
+      href: `/${locale}/admin/coupons`,
+      label: t('admin.coupons'),
+      icon: Tag
+    },
+    {
+      href: `/${locale}/admin/announcements`,
+      label: locale === 'ar' ? 'الشريط الإعلاني' : 'Announcements',
+      icon: Sparkles
+    },
     {
       href: `/${locale}/admin/theme`,
-      label: locale === 'ar' ? 'الألوان' : 'Theme',
+      label: t('admin.theme'),
       icon: Palette
     }
   ];
 
+  const isActive = (href: string, exact?: boolean) =>
+    exact ? pathname === href : pathname.startsWith(href);
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-black text-navy-800 mb-6">{t('admin.title')}</h1>
+    <div className="max-w-7xl mx-auto px-4 py-6 md:py-8">
+      <h1
+        className="text-2xl md:text-3xl font-black mb-6 flex items-center justify-between gap-3"
+        style={{ color: 'var(--color-text-primary)' }}
+      >
+        <span>{t('admin.title')}</span>
+
+        {/* Mobile menu button */}
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="lg:hidden p-2.5 rounded-xl"
+          style={{
+            background: 'var(--color-bg-card)',
+            color: 'var(--color-secondary-500)',
+            border: '1px solid rgba(212, 175, 55, 0.2)'
+          }}
+        >
+          {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
+      </h1>
 
       <div className="grid lg:grid-cols-[240px_1fr] gap-6">
-        <aside className="lg:sticky lg:top-24 h-fit">
-          <nav className="card p-3 flex lg:flex-col gap-2 overflow-x-auto">
-            {links.map(l => {
-              const active = l.exact ? pathname === l.href : pathname.startsWith(l.href);
+        {/* Sidebar */}
+        <aside
+          className={`
+            lg:sticky lg:top-24 h-fit
+            ${sidebarOpen ? 'block' : 'hidden lg:block'}
+          `}
+        >
+          <nav
+            className="rounded-2xl p-3 flex flex-col gap-1.5"
+            style={{
+              background: 'var(--color-bg-card)',
+              border: '1px solid rgba(212, 175, 55, 0.15)'
+            }}
+          >
+            {links.map((l) => {
+              const active = isActive(l.href, l.exact);
               return (
-                <Link key={l.href} href={l.href}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg font-semibold whitespace-nowrap transition-colors ${
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm whitespace-nowrap transition-all"
+                  style={
                     active
-                      ? 'bg-teal-500 text-white'
-                      : 'text-navy-700 hover:bg-gray-100'
-                  }`}>
-                  <l.icon size={20} />
+                      ? {
+                          background: `linear-gradient(to right, var(--color-secondary-500), var(--color-secondary-600))`,
+                          color: '#0a1828'
+                        }
+                      : {
+                          color: 'var(--color-text-primary)',
+                          background: 'transparent'
+                        }
+                  }
+                >
+                  <l.icon size={18} />
                   {l.label}
                 </Link>
               );
@@ -72,6 +163,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </nav>
         </aside>
 
+        {/* Content */}
         <div className="min-w-0">{children}</div>
       </div>
     </div>

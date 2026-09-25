@@ -1,171 +1,79 @@
-'use client';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useLocale, useTranslations } from 'next-intl';
-import { useAuth } from '@/components/AuthProvider';
-import {
-  LayoutDashboard, Package, ShoppingCart, Tag, Palette,
-  Sparkles, Menu, X
-} from 'lucide-react';
-import { useEffect, useState } from 'react';
-import toast from 'react-hot-toast';
+import '../globals.css';
+import { NextIntlClientProvider } from 'next-intl';
+import { getMessages, setRequestLocale } from 'next-intl/server';
+import { notFound } from 'next/navigation';
+import { AuthProvider } from '@/components/AuthProvider';
+import { CartProvider } from '@/components/CartProvider';
+import { ThemeProvider } from '@/components/ThemeProvider';
+import { WishlistProvider } from '@/components/WishlistProvider';
+import { CompareProvider } from '@/components/CompareProvider';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import WhatsAppButton from '@/components/WhatsAppButton';
+import MedicalLoader from '@/components/MedicalLoader';
+import CompareBar from '@/components/CompareBar';
+import { Toaster } from 'react-hot-toast';
 
-export default function AdminLayout({
-  children
+export function generateStaticParams() {
+  return [{ locale: 'ar' }, { locale: 'en' }];
+}
+
+export default async function LocaleLayout({
+  children,
+  params: { locale }
 }: {
   children: React.ReactNode;
+  params: { locale: string };
 }) {
-  const locale = useLocale();
-  const t = useTranslations();
-  const pathname = usePathname();
-  const { user, isAdmin, loading } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  // ✅ تحقق من اللغة
+  if (!['ar', 'en'].includes(locale)) notFound();
 
-  useEffect(() => {
-    if (!loading && (!user || !isAdmin)) {
-      toast.error(t('admin.notAuthorized'));
-    }
-  }, [loading, user, isAdmin, t]);
+  // ✅ مهم: عيّن اللغة للطلبات الثابتة
+  setRequestLocale(locale);
 
-  // Close sidebar on route change
-  useEffect(() => {
-    setSidebarOpen(false);
-  }, [pathname]);
-
-  if (loading) {
-    return (
-      <div
-        className="text-center py-20"
-        style={{ color: 'var(--color-text-muted)' }}
-      >
-        {t('common.loading')}
-      </div>
-    );
-  }
-
-  if (!user || !isAdmin) {
-    return (
-      <div className="max-w-md mx-auto px-4 py-20 text-center">
-        <h1
-          className="text-2xl font-bold mb-4"
-          style={{ color: '#ef4444' }}
-        >
-          {t('admin.notAuthorized')}
-        </h1>
-        <Link
-          href={`/${locale}/login?redirect=/admin`}
-          className="btn-primary inline-flex"
-        >
-          {t('nav.login')}
-        </Link>
-      </div>
-    );
-  }
-
-  const links = [
-    {
-      href: `/${locale}/admin`,
-      label: t('admin.dashboard'),
-      icon: LayoutDashboard,
-      exact: true
-    },
-    {
-      href: `/${locale}/admin/products`,
-      label: t('admin.products'),
-      icon: Package
-    },
-    {
-      href: `/${locale}/admin/orders`,
-      label: t('admin.orders'),
-      icon: ShoppingCart
-    },
-    {
-      href: `/${locale}/admin/coupons`,
-      label: t('admin.coupons'),
-      icon: Tag
-    },
-    {
-      href: `/${locale}/admin/announcements`,
-      label: locale === 'ar' ? 'الشريط الإعلاني' : 'Announcements',
-      icon: Sparkles
-    },
-    {
-      href: `/${locale}/admin/theme`,
-      label: t('admin.theme'),
-      icon: Palette
-    }
-  ];
-
-  const isActive = (href: string, exact?: boolean) =>
-    exact ? pathname === href : pathname.startsWith(href);
+  // ✅ اجلب الرسائل
+  const messages = await getMessages();
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 md:py-8">
-      <h1
-        className="text-2xl md:text-3xl font-black mb-6 flex items-center justify-between gap-3"
-        style={{ color: 'var(--color-text-primary)' }}
-      >
-        <span>{t('admin.title')}</span>
-
-        {/* Mobile menu button */}
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="lg:hidden p-2.5 rounded-xl"
-          style={{
-            background: 'var(--color-bg-card)',
-            color: 'var(--color-secondary-500)',
-            border: '1px solid rgba(212, 175, 55, 0.2)'
-          }}
-        >
-          {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
-      </h1>
-
-      <div className="grid lg:grid-cols-[240px_1fr] gap-6">
-        {/* Sidebar */}
-        <aside
-          className={`
-            lg:sticky lg:top-24 h-fit
-            ${sidebarOpen ? 'block' : 'hidden lg:block'}
-          `}
-        >
-          <nav
-            className="rounded-2xl p-3 flex flex-col gap-1.5"
-            style={{
-              background: 'var(--color-bg-card)',
-              border: '1px solid rgba(212, 175, 55, 0.15)'
-            }}
-          >
-            {links.map((l) => {
-              const active = isActive(l.href, l.exact);
-              return (
-                <Link
-                  key={l.href}
-                  href={l.href}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-sm whitespace-nowrap transition-all"
-                  style={
-                    active
-                      ? {
-                          background: `linear-gradient(to right, var(--color-secondary-500), var(--color-secondary-600))`,
-                          color: '#0a1828'
-                        }
-                      : {
-                          color: 'var(--color-text-primary)',
-                          background: 'transparent'
-                        }
-                  }
-                >
-                  <l.icon size={18} />
-                  {l.label}
-                </Link>
-              );
-            })}
-          </nav>
-        </aside>
-
-        {/* Content */}
-        <div className="min-w-0">{children}</div>
-      </div>
-    </div>
+    <NextIntlClientProvider messages={messages} locale={locale}>
+      <ThemeProvider>
+        <AuthProvider>
+          <WishlistProvider>
+            <CompareProvider>
+              <CartProvider>
+                <MedicalLoader />
+                <Navbar />
+                <main className="flex-1 pb-24">{children}</main>
+                <Footer />
+                <WhatsAppButton />
+                <CompareBar />
+                <Toaster
+                  position="top-center"
+                  toastOptions={{
+                    duration: 3000,
+                    style: {
+                      background: '#1a2f4d',
+                      color: '#f8fafc',
+                      border: '1px solid rgba(212, 175, 55, 0.3)',
+                      borderRadius: '12px',
+                      padding: '12px 20px',
+                      fontWeight: '600',
+                      fontSize: '14px',
+                      boxShadow: '0 10px 40px rgba(0, 0, 0, 0.4)'
+                    },
+                    success: {
+                      iconTheme: { primary: '#d4af37', secondary: '#1a2f4d' }
+                    },
+                    error: {
+                      iconTheme: { primary: '#ef4444', secondary: '#fff' }
+                    }
+                  }}
+                />
+              </CartProvider>
+            </CompareProvider>
+          </WishlistProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </NextIntlClientProvider>
   );
 }
