@@ -3,57 +3,136 @@
 @tailwind components;
 @tailwind utilities;
 
-html { scroll-behavior: smooth; }
-body { font-family: 'Cairo', 'Inter', sans-serif; overflow-x: hidden; }
+/* ==========================================
+   THEME VARIABLES
+   ========================================== */
+:root {
+  --color-primary-50: #f0f4fa;
+  --color-primary-100: #d9e3f3;
+  --color-primary-200: #b3c7e6;
+  --color-primary-300: #7a9cc7;
+  --color-primary-400: #4a72a8;
+  --color-primary-500: #1e3a5f;
+  --color-primary-600: #182f4d;
+  --color-primary-700: #152945;
+  --color-primary-800: #0f1f36;
+  --color-primary-900: #0a1828;
 
-/* Scrollbar */
+  --color-secondary-50: #fefce8;
+  --color-secondary-100: #fef9c3;
+  --color-secondary-200: #fef08a;
+  --color-secondary-300: #fde047;
+  --color-secondary-400: #facc15;
+  --color-secondary-500: #d4af37;
+  --color-secondary-600: #b8942e;
+  --color-secondary-700: #a16207;
+  --color-secondary-800: #854d0e;
+  --color-secondary-900: #713f12;
+
+  --color-bg-base: #0a1828;
+  --color-bg-surface: #0f1f36;
+  --color-bg-elevated: #152945;
+  --color-bg-card: #1a2f4d;
+
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #cbd5e1;
+  --color-text-muted: #94a3b8;
+
+  --color-accent: #d4af37;
+  --color-accent-hover: #facc15;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Cairo', 'Inter', sans-serif;
+  overflow-x: hidden;
+  background-color: var(--color-bg-base);
+  color: var(--color-text-primary);
+  min-height: 100vh;
+}
+
 ::-webkit-scrollbar { width: 10px; }
-::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-track { background: var(--color-bg-surface); }
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(to bottom, #14b8a6, #1e3a5f);
+  background: linear-gradient(to bottom, var(--color-secondary-500), var(--color-primary-500));
   border-radius: 10px;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(to bottom, #0d9488, #152945);
+::selection {
+  background: var(--color-secondary-500);
+  color: var(--color-primary-900);
 }
 
-::selection { background: #14b8a6; color: white; }
+@layer base {
+  h1, h2, h3, h4, h5, h6 { color: var(--color-text-primary); }
+  p, span, label, li, div, small, strong { color: inherit; }
+  a { color: inherit; text-decoration: none; }
+  input, textarea, select {
+    color: var(--color-text-primary);
+    background-color: rgba(15, 31, 54, 0.6);
+  }
+  input::placeholder, textarea::placeholder { color: var(--color-text-muted); }
+}
 
 @layer components {
   .btn-primary {
-    @apply relative bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white px-8 py-3 rounded-full font-semibold transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-teal-500/50 inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden;
+    @apply relative px-6 py-3 rounded-full font-bold transition-all duration-300 shadow-lg hover:shadow-2xl inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden;
+    background: linear-gradient(to right, var(--color-secondary-500), var(--color-secondary-600));
+    color: #0a1828 !important;
   }
-  .btn-primary::before {
-    content: '';
-    @apply absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 -translate-x-full;
-    transition: transform 0.6s;
-  }
-  .btn-primary:hover::before {
-    transform: translateX(100%);
+  .btn-primary:hover {
+    background: linear-gradient(to right, var(--color-secondary-400), var(--color-secondary-500));
+    box-shadow: 0 20px 40px -10px var(--color-secondary-500);
   }
 
   .btn-secondary {
-    @apply relative bg-gradient-to-r from-navy-500 to-navy-700 hover:from-navy-700 hover:to-navy-900 text-white px-8 py-3 rounded-full font-semibold transition-all duration-300 shadow-lg hover:shadow-2xl inline-flex items-center justify-center gap-2;
+    @apply relative px-6 py-3 rounded-full font-bold transition-all duration-300 shadow-lg inline-flex items-center justify-center gap-2;
+    background: linear-gradient(to right, var(--color-primary-500), var(--color-primary-700));
+    color: var(--color-text-primary) !important;
+    border: 1px solid var(--color-secondary-500);
   }
 
   .btn-outline {
-    @apply border-2 border-navy-500 text-navy-500 hover:bg-navy-500 hover:text-white px-8 py-3 rounded-full font-semibold transition-all duration-300 inline-flex items-center justify-center gap-2 hover:scale-105;
+    @apply px-6 py-3 rounded-full font-bold transition-all duration-300 inline-flex items-center justify-center gap-2 hover:scale-105;
+    border: 2px solid var(--color-secondary-500);
+    color: var(--color-secondary-500) !important;
+    background: transparent;
+  }
+  .btn-outline:hover {
+    background: var(--color-secondary-500);
+    color: #0a1828 !important;
   }
 
   .card {
-    @apply bg-white rounded-2xl shadow-md hover:shadow-2xl transition-all duration-500 overflow-hidden relative;
+    @apply rounded-2xl transition-all duration-500 overflow-hidden relative;
+    background: var(--color-bg-card);
+    border: 1px solid rgba(212, 175, 55, 0.15);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    color: var(--color-text-primary);
   }
 
   .card-glass {
-    @apply bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl;
+    @apply rounded-2xl shadow-2xl;
+    background: rgba(26, 47, 77, 0.7);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(212, 175, 55, 0.2);
   }
 
   .input {
-    @apply w-full px-5 py-3 border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all duration-300 bg-white/50 backdrop-blur-sm;
+    @apply w-full px-5 py-3 rounded-xl outline-none transition-all duration-300;
+    background: rgba(15, 31, 54, 0.6);
+    border: 2px solid rgba(212, 175, 55, 0.2);
+    color: var(--color-text-primary) !important;
+  }
+  .input:focus {
+    border-color: var(--color-secondary-500);
+    box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.2);
   }
 
   .label {
-    @apply block text-sm font-bold text-navy-700 mb-2;
+    @apply block text-sm font-bold mb-2;
+    color: var(--color-text-secondary) !important;
   }
 
   .badge {
@@ -62,17 +141,16 @@ body { font-family: 'Cairo', 'Inter', sans-serif; overflow-x: hidden; }
 
   .grid-bg {
     background-image:
-      linear-gradient(to right, rgba(20, 184, 166, 0.08) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(20, 184, 166, 0.08) 1px, transparent 1px);
+      linear-gradient(to right, rgba(212, 175, 55, 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(212, 175, 55, 0.05) 1px, transparent 1px);
     background-size: 40px 40px;
   }
 
-  .glass {
-    @apply bg-white/80 backdrop-blur-xl border border-white/40 shadow-xl;
-  }
-
   .gradient-text {
-    @apply bg-gradient-to-r from-teal-300 via-teal-400 to-teal-500 bg-clip-text text-transparent;
+    background: linear-gradient(135deg, var(--color-secondary-400), var(--color-secondary-500), var(--color-secondary-600));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent !important;
     background-size: 200% 200%;
     animation: gradient 4s ease infinite;
   }
@@ -82,17 +160,95 @@ body { font-family: 'Cairo', 'Inter', sans-serif; overflow-x: hidden; }
   }
 }
 
+/* Override Tailwind backgrounds */
+.bg-white,
+.bg-gray-50,
+.bg-gray-100,
+.bg-slate-50,
+.bg-slate-100 {
+  background-color: var(--color-bg-card) !important;
+}
+.bg-gray-200, .bg-slate-200 {
+  background-color: var(--color-bg-elevated) !important;
+}
+
+/* Override Tailwind text colors */
+.text-navy-700, .text-navy-800, .text-navy-900,
+.text-gray-900, .text-gray-800, .text-gray-700,
+.text-slate-900, .text-slate-800 {
+  color: var(--color-text-primary) !important;
+}
+.text-navy-500, .text-navy-600,
+.text-gray-600, .text-gray-500,
+.text-slate-600, .text-slate-500 {
+  color: var(--color-text-secondary) !important;
+}
+.text-gray-400, .text-slate-400 { color: var(--color-text-muted) !important; }
+.text-teal-500, .text-teal-600, .text-teal-700 {
+  color: var(--color-secondary-500) !important;
+}
+.text-gold-500, .text-gold-600 { color: var(--color-secondary-500) !important; }
+
+.border-gray-100, .border-gray-200,
+.border-slate-100, .border-slate-200 {
+  border-color: rgba(212, 175, 55, 0.15) !important;
+}
+
+.hover\:bg-gray-50:hover, .hover\:bg-gray-100:hover {
+  background-color: var(--color-bg-elevated) !important;
+}
+.hover\:text-teal-500:hover, .hover\:text-teal-600:hover {
+  color: var(--color-secondary-400) !important;
+}
+
+/* Light theme overrides */
+html.theme-light body { background-color: #f8fafc; color: #0a1828; }
+html.theme-light .card { background: #ffffff; color: #0a1828; }
+html.theme-light .bg-white,
+html.theme-light .bg-gray-50,
+html.theme-light .bg-gray-100 { background-color: #ffffff !important; }
+html.theme-light .text-navy-700,
+html.theme-light .text-navy-800,
+html.theme-light .text-navy-900,
+html.theme-light .text-gray-700,
+html.theme-light .text-gray-800,
+html.theme-light .text-gray-900 { color: #0a1828 !important; }
+html.theme-light .text-gray-500,
+html.theme-light .text-gray-600 { color: #64748b !important; }
+
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(20, 184, 166, 0.4); }
-  50% { box-shadow: 0 0 40px rgba(20, 184, 166, 0.7); }
+  0%, 100% { box-shadow: 0 0 20px rgba(212, 175, 55, 0.4); }
+  50% { box-shadow: 0 0 40px rgba(212, 175, 55, 0.7); }
+}
+@keyframes gradient {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
-@keyframes dna-rotate {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+
+/* ==========================================
+   TOASTER OVERRIDE
+   ========================================== */
+div[role="status"] {
+  background: var(--color-bg-card) !important;
+  color: var(--color-text-primary) !important;
+  border: 1px solid rgba(212, 175, 55, 0.3) !important;
 }
 
-.dna-helix {
-  animation: dna-rotate 20s linear infinite;
-  transform-origin: center;
+div[role="status"] div {
+  color: var(--color-text-primary) !important;
+}
+
+/* Success toast */
+div[role="status"][data-type="success"] {
+  border-color: rgba(212, 175, 55, 0.6) !important;
+}
+
+/* Error toast */
+div[role="status"][data-type="error"] {
+  border-color: rgba(239, 68, 68, 0.6) !important;
+}
+
+div[role="status"][data-type="error"] div {
+  color: #fca5a5 !important;
 }

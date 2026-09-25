@@ -8,9 +8,9 @@ import { staggerContainer, staggerItem } from '@/lib/animations';
 const FAQS = [
   {
     qAr: 'كم تستغرق مدة الشحن؟',
-    aAr: 'التوصيل داخل الدقهلية ودمياط خلال 24-48 ساعة. المحافظات الأخرى خلال 2-4 أيام عمل.',
+    aAr: 'التوصيل داخل القاهرة والجيزة خلال 24-48 ساعة. المحافظات الأخرى خلال 2-4 أيام عمل.',
     qEn: 'How long does shipping take?',
-    aEn: 'Delivery within Dakahlia and Damietta takes 24-48 hours. Other governorates take 2-4 business days.'
+    aEn: 'Delivery within Cairo and Giza takes 24-48 hours. Other governorates take 2-4 business days.'
   },
   {
     qAr: 'ما هي طرق الدفع المتاحة؟',
@@ -28,13 +28,13 @@ const FAQS = [
     qAr: 'هل المنتجات طبية معتمدة؟',
     aAr: 'جميع منتجاتنا مطابقة للمعايير الطبية ومعتمدة من الجهات المختصة.',
     qEn: 'Are the products medically certified?',
-    aEn: 'All our products comply with medical standards and are certified by the relevant authorities.'
+    aEn: 'All our products comply with medical standards and are certified.'
   },
   {
     qAr: 'هل يوجد خصومات للطلاب؟',
-    aAr: 'نعم، يوجد خصم دائم 10% لطلاب الطب بكود SOVEREIGN10. تواصل معنا على واتساب لخصومات إضافية للطلبات الكبيرة.',
+    aAr: 'نعم، يوجد خصم دائم 10% لطلاب الطب بكود SOVEREIGN10.',
     qEn: 'Do you offer student discounts?',
-    aEn: 'Yes, a permanent 10% discount for medical students with code SOVEREIGN10. Contact us on WhatsApp for bulk discounts.'
+    aEn: 'Yes, a permanent 10% discount for medical students with code SOVEREIGN10.'
   }
 ];
 
@@ -43,7 +43,10 @@ export default function FAQSection() {
   const [open, setOpen] = useState<number | null>(0);
 
   return (
-    <section className="py-20 px-4 bg-white relative overflow-hidden">
+    <section
+      className="py-20 px-4 relative overflow-hidden"
+      style={{ background: 'var(--color-bg-surface)' }}
+    >
       <div className="absolute inset-0 grid-bg opacity-40" />
 
       <div className="max-w-4xl mx-auto relative">
@@ -54,14 +57,35 @@ export default function FAQSection() {
           className="text-center mb-14"
         >
           <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="h-1 w-12 bg-gradient-to-r from-transparent to-purple-500 rounded-full" />
-            <HelpCircle className="text-purple-500" size={20} />
-            <div className="h-1 w-12 bg-gradient-to-l from-transparent to-purple-500 rounded-full" />
+            <div
+              className="h-1 w-12 rounded-full"
+              style={{
+                background: 'linear-gradient(to right, transparent, var(--color-secondary-500))'
+              }}
+            />
+            <HelpCircle
+              size={20}
+              style={{ color: 'var(--color-secondary-500)' }}
+            />
+            <div
+              className="h-1 w-12 rounded-full"
+              style={{
+                background: 'linear-gradient(to left, transparent, var(--color-secondary-500))'
+              }}
+            />
           </div>
-          <h2 className="text-3xl md:text-5xl font-black text-navy-700 mb-3">
-            {locale === 'ar' ? 'الأسئلة الشائعة' : 'Frequently Asked Questions'}
+
+          <h2
+            className="text-3xl md:text-5xl font-black mb-3"
+            style={{ color: 'var(--color-text-primary)' }}
+          >
+            {locale === 'ar' ? 'الأسئلة الشائعة' : 'FAQ'}
           </h2>
-          <p className="text-gray-600 text-lg">
+
+          <p
+            className="text-lg"
+            style={{ color: 'var(--color-text-secondary)' }}
+          >
             {locale === 'ar'
               ? 'إجابات على أكثر الأسئلة تكراراً'
               : 'Answers to the most common questions'}
@@ -81,23 +105,38 @@ export default function FAQSection() {
               <motion.div
                 key={i}
                 variants={staggerItem}
-                className={`bg-gradient-to-br from-gray-50 to-white rounded-2xl border-2 transition-all duration-300 overflow-hidden ${
-                  isOpen ? 'border-teal-400 shadow-lg' : 'border-gray-100'
-                }`}
+                className="rounded-2xl overflow-hidden transition-all duration-300"
+                style={{
+                  background: 'var(--color-bg-card)',
+                  border: isOpen
+                    ? '2px solid var(--color-secondary-500)'
+                    : '2px solid rgba(212, 175, 55, 0.15)',
+                  boxShadow: isOpen
+                    ? '0 10px 30px rgba(212, 175, 55, 0.15)'
+                    : 'none'
+                }}
               >
                 <button
                   onClick={() => setOpen(isOpen ? null : i)}
-                  className="w-full p-5 flex items-center justify-between gap-4 text-start hover:bg-white/50 transition-colors"
+                  className="w-full p-5 flex items-center justify-between gap-4 text-start transition-colors"
                 >
-                  <span className="font-bold text-navy-700 text-start flex-1">
+                  <span
+                    className="font-bold text-start flex-1"
+                    style={{ color: 'var(--color-text-primary)' }}
+                  >
                     {locale === 'ar' ? faq.qAr : faq.qEn}
                   </span>
+
                   <motion.div
                     animate={{ rotate: isOpen ? 180 : 0 }}
                     transition={{ duration: 0.3 }}
-                    className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                      isOpen ? 'bg-teal-500 text-white' : 'bg-gray-200 text-gray-600'
-                    }`}
+                    className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+                    style={{
+                      background: isOpen
+                        ? 'var(--color-secondary-500)'
+                        : 'rgba(212, 175, 55, 0.15)',
+                      color: isOpen ? '#0a1828' : 'var(--color-secondary-500)'
+                    }}
                   >
                     {isOpen ? <Minus size={16} /> : <Plus size={16} />}
                   </motion.div>
@@ -112,7 +151,13 @@ export default function FAQSection() {
                       transition={{ duration: 0.3 }}
                       className="overflow-hidden"
                     >
-                      <div className="px-5 pb-5 text-gray-600 leading-relaxed border-t border-gray-100 pt-4">
+                      <div
+                        className="px-5 pb-5 leading-relaxed pt-4"
+                        style={{
+                          color: 'var(--color-text-secondary)',
+                          borderTop: '1px solid rgba(212, 175, 55, 0.15)'
+                        }}
+                      >
                         {locale === 'ar' ? faq.aAr : faq.aEn}
                       </div>
                     </motion.div>

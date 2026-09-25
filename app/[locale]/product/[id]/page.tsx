@@ -15,11 +15,9 @@ import { formatPrice, formatDate } from '@/lib/utils';
 import {
   ShoppingCart, Star, Minus, Plus, ArrowLeft, ArrowRight,
   Package, Check, AlertTriangle, RefreshCw, Heart,
-  Truck, ShieldCheck, Sparkles, ChevronLeft, ChevronRight,
-  Send, ThumbsUp, Award
+  Truck, ShieldCheck, Sparkles, Send, Award
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { fadeInUp, staggerContainer } from '@/lib/animations';
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -39,29 +37,19 @@ export default function ProductDetailPage() {
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [activeImage, setActiveImage] = useState(0);
 
   const [error, setError] = useState<string | null>(null);
-  const [debugInfo, setDebugInfo] = useState<any>({});
 
   const Arrow = locale === 'ar' ? ArrowRight : ArrowLeft;
 
   useEffect(() => {
     const id = params?.id as string;
-    const info: any = {
-      paramsId: id,
-      locale,
-      url: typeof window !== 'undefined' ? window.location.href : '',
-      timestamp: new Date().toISOString()
-    };
-
     if (!id || id === 'undefined' || id === 'null') {
       setError(
         locale === 'ar'
-          ? `المعرّف (ID) غير صحيح: "${id}"`
-          : `Invalid ID: "${id}"`
+          ? `المعرّف غير صحيح`
+          : `Invalid ID`
       );
-      setDebugInfo(info);
       setLoading(false);
       return;
     }
@@ -69,100 +57,89 @@ export default function ProductDetailPage() {
     Promise.all([getProduct(id), getProductReviews(id)])
       .then(([p, r]) => {
         if (!p) {
-          setError(
-            locale === 'ar'
-              ? `المنتج مش موجود في قاعدة البيانات (ID: ${id})`
-              : `Product not found in database (ID: ${id})`
-          );
-          setDebugInfo({ ...info, productExists: false });
-          setLoading(false);
+          router.push(`/${locale}/products`);
           return;
         }
         setProduct(p);
         setReviews(r);
-        setDebugInfo({ ...info, productExists: true });
       })
       .catch((err) => {
-        console.error('❌ Firebase Error:', err);
-        setError(
-          locale === 'ar'
-            ? `خطأ Firebase: ${err?.message || err?.code}`
-            : `Firebase Error: ${err?.message || err?.code}`
-        );
-        setDebugInfo({
-          ...info,
-          errorCode: err?.code,
-          errorMessage: err?.message
-        });
+        console.error(err);
+        setError(locale === 'ar' ? 'فشل تحميل المنتج' : 'Failed to load');
       })
       .finally(() => setLoading(false));
-  }, [params, locale]);
+  }, [params, locale, router]);
 
-  // ==================== LOADING ====================
+  // LOADING
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-10">
-        <div className="grid md:grid-cols-2 gap-10 animate-pulse">
-          <div className="aspect-square bg-gradient-to-br from-gray-200 to-gray-300 rounded-3xl" />
-          <div className="space-y-4 pt-4">
-            <div className="h-10 bg-gray-200 rounded-full w-3/4" />
-            <div className="h-6 bg-gray-200 rounded-full w-1/3" />
-            <div className="h-32 bg-gray-200 rounded-2xl" />
-            <div className="h-12 bg-gray-200 rounded-full w-2/3" />
-            <div className="h-14 bg-gray-200 rounded-full" />
+      <div
+        className="min-h-screen py-10 px-4"
+        style={{ background: 'var(--color-bg-base)' }}
+      >
+        <div className="max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-10 animate-pulse">
+            <div
+              className="aspect-square rounded-3xl"
+              style={{ background: 'var(--color-bg-card)' }}
+            />
+            <div className="space-y-4 pt-4">
+              <div
+                className="h-10 rounded-full w-3/4"
+                style={{ background: 'var(--color-bg-card)' }}
+              />
+              <div
+                className="h-6 rounded-full w-1/3"
+                style={{ background: 'var(--color-bg-card)' }}
+              />
+              <div
+                className="h-32 rounded-2xl"
+                style={{ background: 'var(--color-bg-card)' }}
+              />
+              <div
+                className="h-14 rounded-full"
+                style={{ background: 'var(--color-bg-card)' }}
+              />
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
-  // ==================== ERROR ====================
+  // ERROR
   if (error) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-16">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-br from-red-50 to-red-100 border-2 border-red-200 rounded-3xl p-8 shadow-xl"
+      <div
+        className="min-h-screen flex items-center justify-center px-4 py-16"
+        style={{ background: 'var(--color-bg-base)' }}
+      >
+        <div
+          className="max-w-md w-full rounded-3xl p-8 text-center"
+          style={{
+            background: 'var(--color-bg-card)',
+            border: '2px solid rgba(239, 68, 68, 0.3)'
+          }}
         >
-          <div className="flex items-start gap-4 mb-6">
-            <motion.div
-              animate={{ rotate: [0, -10, 10, -10, 0] }}
-              transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 2 }}
-              className="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center flex-shrink-0 shadow-lg"
-            >
-              <AlertTriangle size={32} className="text-white" />
-            </motion.div>
-            <div className="flex-1">
-              <h1 className="text-2xl font-black text-red-700 mb-2">
-                {locale === 'ar' ? 'حدث خطأ' : 'Something went wrong'}
-              </h1>
-              <p className="text-red-600 font-semibold">{error}</p>
-            </div>
+          <div
+            className="w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4"
+            style={{ background: 'rgba(239, 68, 68, 0.15)' }}
+          >
+            <AlertTriangle size={32} style={{ color: '#ef4444' }} />
           </div>
-
-          <div className="bg-white rounded-2xl p-5 border border-red-200 mb-6">
-            <h2 className="font-bold text-navy-700 mb-3 flex items-center gap-2">
-              <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-              {locale === 'ar' ? 'معلومات التشخيص' : 'Debug Info'}
-            </h2>
-            <div className="space-y-2 text-sm">
-              {Object.entries(debugInfo).map(([key, value]) => (
-                <div key={key} className="flex gap-3 items-start">
-                  <span className="font-bold text-navy-700 min-w-[130px]">
-                    {key}:
-                  </span>
-                  <span className="text-gray-700 break-all flex-1 font-mono text-xs bg-gray-100 rounded px-2 py-1">
-                    {typeof value === 'object'
-                      ? JSON.stringify(value, null, 2)
-                      : String(value)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-3">
+          <h1
+            className="text-2xl font-black mb-3"
+            style={{ color: 'var(--color-text-primary)' }}
+          >
+            {locale === 'ar' ? 'حدث خطأ' : 'Error'}
+          </h1>
+          <p
+            className="mb-6"
+            style={{ color: 'var(--color-text-secondary)' }}
+          >
+            {error}
+          </p>
+          <div className="flex gap-3 justify-center">
             <button
               onClick={() => window.location.reload()}
               className="btn-primary"
@@ -174,7 +151,7 @@ export default function ProductDetailPage() {
               {locale === 'ar' ? 'كل المنتجات' : 'All Products'}
             </Link>
           </div>
-        </motion.div>
+        </div>
       </div>
     );
   }
@@ -225,7 +202,7 @@ export default function ProductDetailPage() {
       setReviews(updated);
       setComment('');
       setRating(5);
-      toast.success(locale === 'ar' ? 'تم إرسال التقييم ✓' : 'Review submitted ✓');
+      toast.success(locale === 'ar' ? 'تم إرسال التقييم ✓' : 'Review sent ✓');
     } catch {
       toast.error(t('auth.error'));
     } finally {
@@ -233,39 +210,59 @@ export default function ProductDetailPage() {
     }
   };
 
-  const avgRating = reviews.length > 0
-    ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
-    : 0;
+  const avgRating =
+    reviews.length > 0
+      ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
+      : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div
+      className="min-h-screen py-8 px-4 relative overflow-hidden"
+      style={{ background: 'var(--color-bg-base)' }}
+    >
       {/* Decorative background */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-        <div className="absolute top-20 -right-20 w-96 h-96 bg-teal-200/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 -left-20 w-96 h-96 bg-navy-200/20 rounded-full blur-3xl" />
+      <div className="absolute inset-0 pointer-events-none">
+        <div
+          className="absolute top-20 -right-20 w-96 h-96 rounded-full blur-3xl opacity-20"
+          style={{ background: 'var(--color-secondary-500)' }}
+        />
+        <div
+          className="absolute bottom-20 -left-20 w-96 h-96 rounded-full blur-3xl opacity-20"
+          style={{ background: 'var(--color-primary-500)' }}
+        />
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto relative">
         {/* Breadcrumb */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-2 text-sm text-gray-500 mb-6"
+          className="flex items-center gap-2 text-sm mb-6"
+          style={{ color: 'var(--color-text-muted)' }}
         >
           <Link
             href={`/${locale}/products`}
-            className="inline-flex items-center gap-1.5 text-navy-600 hover:text-teal-600 font-semibold transition-colors group"
+            className="inline-flex items-center gap-1.5 font-semibold transition-colors group hover:opacity-80"
+            style={{ color: 'var(--color-secondary-500)' }}
           >
-            <Arrow size={16} className="group-hover:-translate-x-1 transition-transform" />
+            <Arrow
+              size={16}
+              className="group-hover:-translate-x-1 transition-transform"
+            />
             {t('common.back')}
           </Link>
-          <span className="text-gray-300">/</span>
-          <span className="text-gray-700 font-medium line-clamp-1">{name}</span>
+          <span style={{ color: 'var(--color-text-muted)' }}>/</span>
+          <span
+            className="font-medium line-clamp-1"
+            style={{ color: 'var(--color-text-secondary)' }}
+          >
+            {name}
+          </span>
         </motion.div>
 
         {/* Main Grid */}
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-14 mb-16">
-          {/* ============ IMAGE SECTION ============ */}
+          {/* ============ IMAGE ============ */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
@@ -273,23 +270,30 @@ export default function ProductDetailPage() {
             className="lg:sticky lg:top-24 h-fit"
           >
             <div className="relative">
-              {/* Decorative glow */}
-              <div className="absolute -inset-4 bg-gradient-to-br from-teal-400/20 to-navy-500/20 rounded-[2rem] blur-2xl" />
+              {/* Glow */}
+              <div
+                className="absolute -inset-4 rounded-[2rem] blur-2xl opacity-30"
+                style={{
+                  background: `linear-gradient(to bottom right, var(--color-secondary-500), var(--color-primary-500))`
+                }}
+              />
 
-              {/* Main image */}
-              <div className="relative aspect-square rounded-3xl overflow-hidden bg-white shadow-2xl border border-gray-100 group">
+              {/* Image */}
+              <div
+                className="relative aspect-square rounded-3xl overflow-hidden shadow-2xl group"
+                style={{
+                  background: 'var(--color-bg-card)',
+                  border: '1px solid rgba(212, 175, 55, 0.2)'
+                }}
+              >
                 <motion.img
-                  key={activeImage}
-                  initial={{ scale: 1.1, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.5 }}
                   src={product.image}
                   alt={name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 />
 
                 {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                 {/* Badges */}
                 <div className="absolute top-4 right-4 flex flex-col gap-2 items-end">
@@ -298,39 +302,69 @@ export default function ProductDetailPage() {
                       initial={{ x: 50, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
                       transition={{ delay: 0.2 }}
-                      className="bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-2 rounded-full font-bold shadow-xl flex items-center gap-1"
+                      className="px-4 py-2 rounded-full font-bold shadow-xl flex items-center gap-1"
+                      style={{
+                        background: 'linear-gradient(to right, #ef4444, #dc2626)',
+                        color: '#fff'
+                      }}
                     >
                       <Sparkles size={16} />
-                      خصم {discountPercent}%
+                      -{discountPercent}%
                     </motion.span>
                   )}
                   {product.stock > 0 && product.stock < 5 && (
-                    <span className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg">
-                      آخر {product.stock} قطع!
+                    <span
+                      className="px-3 py-1.5 rounded-full text-xs font-bold shadow-lg"
+                      style={{
+                        background: 'linear-gradient(to right, #f97316, #ea580c)',
+                        color: '#fff'
+                      }}
+                    >
+                      {locale === 'ar'
+                        ? `آخر ${product.stock} قطع!`
+                        : `Only ${product.stock} left!`}
                     </span>
                   )}
                 </div>
 
-                {/* Favorite button */}
+                {/* Favorite */}
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setIsFavorite(!isFavorite)}
-                  className={`absolute top-4 left-4 w-12 h-12 rounded-full flex items-center justify-center shadow-xl backdrop-blur-sm transition-colors ${
-                    isFavorite
-                      ? 'bg-red-500 text-white'
-                      : 'bg-white/90 text-gray-600 hover:bg-white'
-                  }`}
+                  className="absolute top-4 left-4 w-12 h-12 rounded-full flex items-center justify-center shadow-xl backdrop-blur-sm transition-colors"
+                  style={{
+                    background: isFavorite
+                      ? '#ef4444'
+                      : 'rgba(26, 47, 77, 0.9)',
+                    color: isFavorite
+                      ? '#fff'
+                      : 'var(--color-secondary-500)',
+                    border: '1px solid rgba(212, 175, 55, 0.3)'
+                  }}
                 >
-                  <Heart size={22} className={isFavorite ? 'fill-white' : ''} />
+                  <Heart
+                    size={22}
+                    className={isFavorite ? 'fill-white' : ''}
+                  />
                 </motion.button>
 
-                {/* Out of stock overlay */}
+                {/* Out of stock */}
                 {product.stock === 0 && (
                   <div className="absolute inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center">
-                    <div className="bg-white px-8 py-6 rounded-2xl text-center shadow-2xl">
-                      <Package size={48} className="text-gray-400 mx-auto mb-2" />
-                      <p className="font-black text-navy-700 text-xl">
+                    <div
+                      className="px-8 py-6 rounded-2xl text-center shadow-2xl"
+                      style={{ background: 'var(--color-bg-card)' }}
+                    >
+                      <Package
+                        size={48}
+                        className="mx-auto mb-2"
+                        style={{ color: 'var(--color-text-muted)' }}
+                      />
+                      <p
+                        className="font-black text-xl"
+                        style={{ color: 'var(--color-text-primary)' }}
+                      >
                         {t('product.outOfStock')}
                       </p>
                     </div>
@@ -338,22 +372,41 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              {/* Trust badges strip */}
+              {/* Trust badges */}
               <div className="grid grid-cols-3 gap-3 mt-4">
                 {[
-                  { icon: Truck, label: locale === 'ar' ? 'شحن سريع' : 'Fast Ship' },
-                  { icon: ShieldCheck, label: locale === 'ar' ? 'دفع آمن' : 'Secure' },
-                  { icon: Award, label: locale === 'ar' ? 'جودة عالية' : 'Premium' }
+                  {
+                    icon: Truck,
+                    label: locale === 'ar' ? 'شحن سريع' : 'Fast Ship'
+                  },
+                  {
+                    icon: ShieldCheck,
+                    label: locale === 'ar' ? 'دفع آمن' : 'Secure'
+                  },
+                  {
+                    icon: Award,
+                    label: locale === 'ar' ? 'جودة عالية' : 'Premium'
+                  }
                 ].map(({ icon: Icon, label }, i) => (
                   <motion.div
                     key={i}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 + i * 0.1 }}
-                    className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:border-teal-200 transition-all"
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-2xl transition-all hover:scale-105"
+                    style={{
+                      background: 'var(--color-bg-card)',
+                      border: '1px solid rgba(212, 175, 55, 0.2)'
+                    }}
                   >
-                    <Icon size={20} className="text-teal-600" />
-                    <span className="text-xs font-bold text-navy-700">
+                    <Icon
+                      size={20}
+                      style={{ color: 'var(--color-secondary-500)' }}
+                    />
+                    <span
+                      className="text-xs font-bold"
+                      style={{ color: 'var(--color-text-primary)' }}
+                    >
                       {label}
                     </span>
                   </motion.div>
@@ -362,7 +415,7 @@ export default function ProductDetailPage() {
             </div>
           </motion.div>
 
-          {/* ============ INFO SECTION ============ */}
+          {/* ============ INFO ============ */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
@@ -370,8 +423,18 @@ export default function ProductDetailPage() {
           >
             {/* Category + Rating */}
             <div className="flex flex-wrap items-center gap-3 mb-4">
-              <span className="inline-flex items-center gap-1.5 bg-teal-50 text-teal-700 px-3 py-1.5 rounded-full text-xs font-bold border border-teal-200">
-                <span className="w-1.5 h-1.5 bg-teal-500 rounded-full animate-pulse" />
+              <span
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
+                style={{
+                  background: 'rgba(212, 175, 55, 0.15)',
+                  color: 'var(--color-secondary-500)',
+                  border: '1px solid rgba(212, 175, 55, 0.3)'
+                }}
+              >
+                <span
+                  className="w-1.5 h-1.5 rounded-full animate-pulse"
+                  style={{ background: 'var(--color-secondary-500)' }}
+                />
                 {product.category}
               </span>
 
@@ -385,12 +448,15 @@ export default function ProductDetailPage() {
                         className={
                           i < Math.round(avgRating)
                             ? 'fill-yellow-400 text-yellow-400'
-                            : 'text-gray-300'
+                            : 'text-gray-500'
                         }
                       />
                     ))}
                   </div>
-                  <span className="text-sm text-gray-600 font-semibold">
+                  <span
+                    className="text-sm font-semibold"
+                    style={{ color: 'var(--color-text-secondary)' }}
+                  >
                     {avgRating.toFixed(1)} ({reviews.length})
                   </span>
                 </div>
@@ -398,17 +464,26 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Title */}
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-navy-800 mb-4 leading-tight">
+            <h1
+              className="text-3xl md:text-4xl lg:text-5xl font-black mb-4 leading-tight"
+              style={{ color: 'var(--color-text-primary)' }}
+            >
               {name}
             </h1>
 
             {/* Price */}
             <div className="flex items-baseline gap-3 mb-6">
-              <span className="text-4xl md:text-5xl font-black bg-gradient-to-r from-teal-500 to-teal-700 bg-clip-text text-transparent">
+              <span
+                className="text-4xl md:text-5xl font-black"
+                style={{ color: 'var(--color-secondary-500)' }}
+              >
                 {formatPrice(product.price, locale)}
               </span>
               {onSale && (
-                <span className="text-2xl text-gray-400 line-through">
+                <span
+                  className="text-2xl line-through"
+                  style={{ color: 'var(--color-text-muted)' }}
+                >
                   {formatPrice(product.oldPrice!, locale)}
                 </span>
               )}
@@ -416,15 +491,24 @@ export default function ProductDetailPage() {
 
             {/* Stock status */}
             <div
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-full font-bold mb-6 ${
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full font-bold mb-6"
+              style={
                 product.stock > 0
-                  ? 'bg-green-50 text-green-700 border border-green-200'
-                  : 'bg-red-50 text-red-700 border border-red-200'
-              }`}
+                  ? {
+                      background: 'rgba(16, 185, 129, 0.15)',
+                      color: '#10b981',
+                      border: '1px solid rgba(16, 185, 129, 0.3)'
+                    }
+                  : {
+                      background: 'rgba(239, 68, 68, 0.15)',
+                      color: '#ef4444',
+                      border: '1px solid rgba(239, 68, 68, 0.3)'
+                    }
+              }
             >
               {product.stock > 0 ? (
                 <>
-                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  <span className="w-2 h-2 bg-current rounded-full animate-pulse" />
                   <Check size={16} />
                   {t('product.inStock')} ({product.stock})
                 </>
@@ -437,37 +521,65 @@ export default function ProductDetailPage() {
             </div>
 
             {/* Description */}
-            <div className="relative mb-8 p-5 rounded-2xl bg-gradient-to-br from-gray-50 to-white border border-gray-100">
-              <p className="text-gray-700 leading-relaxed">{desc}</p>
+            <div
+              className="relative mb-8 p-5 rounded-2xl"
+              style={{
+                background: 'var(--color-bg-card)',
+                border: '1px solid rgba(212, 175, 55, 0.15)'
+              }}
+            >
+              <p
+                className="leading-relaxed"
+                style={{ color: 'var(--color-text-secondary)' }}
+              >
+                {desc}
+              </p>
             </div>
 
             {/* Quantity */}
-            <div className="flex items-center gap-4 mb-6">
-              <span className="font-bold text-navy-700">
+            <div className="flex items-center gap-4 mb-6 flex-wrap">
+              <span
+                className="font-bold"
+                style={{ color: 'var(--color-text-primary)' }}
+              >
                 {t('product.quantity')}:
               </span>
-              <div className="flex items-center border-2 border-gray-200 rounded-full overflow-hidden bg-white shadow-sm">
+              <div
+                className="flex items-center rounded-full overflow-hidden"
+                style={{
+                  background: 'var(--color-bg-card)',
+                  border: '2px solid rgba(212, 175, 55, 0.2)'
+                }}
+              >
                 <motion.button
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setQty(Math.max(1, qty - 1))}
                   disabled={qty <= 1}
-                  className="p-3 hover:bg-gray-100 transition-colors disabled:opacity-30"
+                  className="p-3 transition-colors disabled:opacity-30"
+                  style={{ color: 'var(--color-text-primary)' }}
                 >
                   <Minus size={18} />
                 </motion.button>
-                <span className="px-8 font-black text-xl min-w-[70px] text-center text-navy-700">
+                <span
+                  className="px-8 font-black text-xl min-w-[70px] text-center"
+                  style={{ color: 'var(--color-text-primary)' }}
+                >
                   {qty}
                 </span>
                 <motion.button
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setQty(Math.min(product.stock, qty + 1))}
                   disabled={qty >= product.stock}
-                  className="p-3 hover:bg-gray-100 transition-colors disabled:opacity-30"
+                  className="p-3 transition-colors disabled:opacity-30"
+                  style={{ color: 'var(--color-text-primary)' }}
                 >
                   <Plus size={18} />
                 </motion.button>
               </div>
-              <span className="text-sm text-gray-500">
+              <span
+                className="text-sm"
+                style={{ color: 'var(--color-text-muted)' }}
+              >
                 = {formatPrice(product.price * qty, locale)}
               </span>
             </div>
@@ -503,17 +615,29 @@ export default function ProductDetailPage() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="border-t border-gray-200 pt-12"
+          className="pt-12"
+          style={{ borderTop: '1px solid rgba(212, 175, 55, 0.15)' }}
         >
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-lg">
+            <div
+              className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg"
+              style={{
+                background: 'linear-gradient(to bottom right, #facc15, #f59e0b)'
+              }}
+            >
               <Star size={24} className="text-white fill-white" />
             </div>
             <div>
-              <h2 className="text-3xl font-black text-navy-800">
+              <h2
+                className="text-3xl font-black"
+                style={{ color: 'var(--color-text-primary)' }}
+              >
                 {t('product.reviews')}
               </h2>
-              <p className="text-gray-500 text-sm">
+              <p
+                className="text-sm"
+                style={{ color: 'var(--color-text-muted)' }}
+              >
                 {reviews.length}{' '}
                 {locale === 'ar' ? 'تقييم' : 'reviews'}
               </p>
@@ -521,17 +645,35 @@ export default function ProductDetailPage() {
           </div>
 
           <div className="grid lg:grid-cols-5 gap-8">
-            {/* Reviews List */}
+            {/* List */}
             <div className="lg:col-span-3 space-y-4">
               {reviews.length === 0 ? (
-                <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-white rounded-3xl border-2 border-dashed border-gray-200">
-                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-                    <Star size={40} className="text-gray-300" />
+                <div
+                  className="text-center py-16 rounded-3xl"
+                  style={{
+                    background: 'var(--color-bg-card)',
+                    border: '2px dashed rgba(212, 175, 55, 0.2)'
+                  }}
+                >
+                  <div
+                    className="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center"
+                    style={{ background: 'rgba(212, 175, 55, 0.1)' }}
+                  >
+                    <Star
+                      size={40}
+                      style={{ color: 'var(--color-text-muted)' }}
+                    />
                   </div>
-                  <p className="text-gray-500 font-semibold">
+                  <p
+                    className="font-semibold"
+                    style={{ color: 'var(--color-text-secondary)' }}
+                  >
                     {t('product.noReviews')}
                   </p>
-                  <p className="text-gray-400 text-sm mt-1">
+                  <p
+                    className="text-sm mt-1"
+                    style={{ color: 'var(--color-text-muted)' }}
+                  >
                     {locale === 'ar'
                       ? 'كن أول من يقيّم المنتج'
                       : 'Be the first to review'}
@@ -545,18 +687,33 @@ export default function ProductDetailPage() {
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.05 }}
-                      className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-lg transition-shadow"
+                      className="rounded-2xl p-5 transition-shadow hover:shadow-lg"
+                      style={{
+                        background: 'var(--color-bg-card)',
+                        border: '1px solid rgba(212, 175, 55, 0.15)'
+                      }}
                     >
                       <div className="flex justify-between items-start mb-3">
                         <div className="flex items-center gap-3">
-                          <div className="w-11 h-11 rounded-full bg-gradient-to-br from-teal-400 to-navy-500 flex items-center justify-center text-white font-black shadow-md">
+                          <div
+                            className="w-11 h-11 rounded-full flex items-center justify-center text-white font-black shadow-md"
+                            style={{
+                              background: `linear-gradient(to bottom right, var(--color-secondary-500), var(--color-primary-500))`
+                            }}
+                          >
                             {r.userName.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <p className="font-bold text-navy-700">
+                            <p
+                              className="font-bold"
+                              style={{ color: 'var(--color-text-primary)' }}
+                            >
                               {r.userName}
                             </p>
-                            <p className="text-xs text-gray-400">
+                            <p
+                              className="text-xs"
+                              style={{ color: 'var(--color-text-muted)' }}
+                            >
                               {formatDate(r.createdAt, locale)}
                             </p>
                           </div>
@@ -569,13 +726,16 @@ export default function ProductDetailPage() {
                               className={
                                 i < r.rating
                                   ? 'fill-yellow-400 text-yellow-400'
-                                  : 'text-gray-200'
+                                  : 'text-gray-500'
                               }
                             />
                           ))}
                         </div>
                       </div>
-                      <p className="text-gray-700 leading-relaxed text-sm">
+                      <p
+                        className="leading-relaxed text-sm"
+                        style={{ color: 'var(--color-text-secondary)' }}
+                      >
                         {r.comment}
                       </p>
                     </motion.div>
@@ -584,22 +744,35 @@ export default function ProductDetailPage() {
               )}
             </div>
 
-            {/* Add Review Form */}
+            {/* Form */}
             <div className="lg:col-span-2">
               <form
                 onSubmit={submitReview}
-                className="bg-gradient-to-br from-white to-gray-50 rounded-3xl p-6 border border-gray-100 shadow-lg lg:sticky lg:top-24"
+                className="rounded-3xl p-6 lg:sticky lg:top-24"
+                style={{
+                  background: 'var(--color-bg-card)',
+                  border: '1px solid rgba(212, 175, 55, 0.2)',
+                  boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)'
+                }}
               >
                 <div className="flex items-center gap-2 mb-5">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center">
-                    <Send size={18} className="text-white" />
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center"
+                    style={{
+                      background: `linear-gradient(to bottom right, var(--color-secondary-500), var(--color-secondary-600))`
+                    }}
+                  >
+                    <Send size={18} style={{ color: '#0a1828' }} />
                   </div>
-                  <h3 className="font-black text-navy-700 text-lg">
+                  <h3
+                    className="font-black text-lg"
+                    style={{ color: 'var(--color-text-primary)' }}
+                  >
                     {t('product.addReview')}
                   </h3>
                 </div>
 
-                {/* Star rating */}
+                {/* Rating stars */}
                 <div className="mb-5">
                   <label className="label">{t('product.yourRating')}</label>
                   <div className="flex gap-1">
@@ -618,15 +791,20 @@ export default function ProductDetailPage() {
                           className={
                             n <= (hoverRating || rating)
                               ? 'fill-yellow-400 text-yellow-400 drop-shadow-md'
-                              : 'text-gray-300'
+                              : 'text-gray-500'
                           }
                         />
                       </motion.button>
                     ))}
                   </div>
-                  <p className="text-xs text-gray-500 mt-2">
-                    {rating === 5 && (locale === 'ar' ? 'ممتاز! 🌟' : 'Excellent! 🌟')}
-                    {rating === 4 && (locale === 'ar' ? 'جيد جداً 😊' : 'Very good 😊')}
+                  <p
+                    className="text-xs mt-2"
+                    style={{ color: 'var(--color-text-muted)' }}
+                  >
+                    {rating === 5 &&
+                      (locale === 'ar' ? 'ممتاز! 🌟' : 'Excellent! 🌟')}
+                    {rating === 4 &&
+                      (locale === 'ar' ? 'جيد جداً 😊' : 'Very good 😊')}
                     {rating === 3 && (locale === 'ar' ? 'جيد 🙂' : 'Good 🙂')}
                     {rating === 2 && (locale === 'ar' ? 'مقبول 😐' : 'Fair 😐')}
                     {rating === 1 && (locale === 'ar' ? 'سيء 😞' : 'Poor 😞')}
@@ -659,7 +837,7 @@ export default function ProductDetailPage() {
                 >
                   {submitting ? (
                     <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
                       {t('common.loading')}
                     </>
                   ) : (
@@ -671,7 +849,10 @@ export default function ProductDetailPage() {
                 </motion.button>
 
                 {!user && (
-                  <p className="text-sm text-red-500 mt-3 text-center font-semibold">
+                  <p
+                    className="text-sm mt-3 text-center font-semibold"
+                    style={{ color: '#ef4444' }}
+                  >
                     {t('checkout.loginRequired')}
                   </p>
                 )}

@@ -26,21 +26,25 @@ export default function NewsletterSection() {
 
   return (
     <section className="py-20 px-4 relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-green-500 via-green-600 to-teal-700" />
+      <div
+        className="absolute inset-0"
+        style={{
+          background: `linear-gradient(to bottom right, #10b981, #059669, var(--color-primary-700))`
+        }}
+      />
       <div className="absolute inset-0 grid-bg opacity-20" />
 
-      {/* Animated circles */}
       {[...Array(3)].map((_, i) => (
         <motion.div
           key={i}
-          className="absolute border-2 border-white/20 rounded-full"
+          className="absolute rounded-full"
           style={{
             width: `${200 + i * 150}px`,
             height: `${200 + i * 150}px`,
             top: '50%',
             left: '50%',
-            x: '-50%',
-            y: '-50%'
+            transform: 'translate(-50%, -50%)',
+            border: '2px solid rgba(255, 255, 255, 0.2)'
           }}
           animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 4, repeat: Infinity, delay: i * 0.5 }}
@@ -50,7 +54,12 @@ export default function NewsletterSection() {
       <div className="max-w-3xl mx-auto relative z-10 text-center">
         <motion.div
           animate={heartbeat}
-          className="w-20 h-20 mx-auto mb-6 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30"
+          className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center"
+          style={{
+            background: 'rgba(255, 255, 255, 0.2)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.3)'
+          }}
         >
           <MessageCircle size={36} className="text-white fill-white" />
         </motion.div>
@@ -59,7 +68,13 @@ export default function NewsletterSection() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/30 text-white px-5 py-2 rounded-full text-sm font-semibold mb-6"
+          className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold mb-6"
+          style={{
+            background: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            color: '#fff'
+          }}
         >
           <Users size={16} />
           {locale === 'ar'
@@ -88,14 +103,19 @@ export default function NewsletterSection() {
         >
           {locale === 'ar'
             ? 'كن أول من يعرف عن العروض الحصرية والمنتجات الجديدة، وتواصل مباشرة مع فريقنا'
-            : 'Be the first to know about exclusive offers, new products, and chat directly with our team'}
+            : 'Be the first to know about exclusive offers and chat with our team'}
         </motion.p>
 
         {joined ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="inline-flex items-center gap-3 bg-white/20 backdrop-blur-md border border-white/30 rounded-full px-8 py-4 text-white"
+            className="inline-flex items-center gap-3 rounded-full px-8 py-4 text-white"
+            style={{
+              background: 'rgba(255, 255, 255, 0.2)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.3)'
+            }}
           >
             <CheckCircle2 size={24} />
             <span className="font-bold text-lg">
@@ -116,7 +136,8 @@ export default function NewsletterSection() {
               onClick={handleJoin}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-8 py-4 rounded-full bg-white text-green-600 font-bold flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors shadow-xl"
+              className="px-8 py-4 rounded-full font-bold flex items-center justify-center gap-2 shadow-xl"
+              style={{ background: '#ffffff', color: '#059669' }}
             >
               <MessageCircle size={20} />
               {locale === 'ar' ? 'انضم الآن' : 'Join Now'}
@@ -130,7 +151,12 @@ export default function NewsletterSection() {
               rel="noopener noreferrer"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-8 py-4 rounded-full bg-white/10 backdrop-blur-sm border border-white/40 text-white font-bold flex items-center justify-center gap-2 hover:bg-white/20 transition-colors"
+              className="px-8 py-4 rounded-full font-bold flex items-center justify-center gap-2 text-white"
+              style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.4)'
+              }}
             >
               <Sparkles size={20} />
               {locale === 'ar' ? 'تواصل مباشر' : 'Direct Chat'}

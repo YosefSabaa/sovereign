@@ -25,20 +25,32 @@ export default function MedicalSectionTitle({
       className={centered ? 'text-center mb-12' : 'mb-12'}
     >
       <div className={`flex items-center gap-3 mb-4 ${centered ? 'justify-center' : ''}`}>
-        <div className="h-1 w-12 bg-gradient-to-r from-transparent to-teal-500 rounded-full" />
+        <div
+          className="h-1 w-12 rounded-full"
+          style={{ background: 'linear-gradient(to right, transparent, var(--color-secondary-500))' }}
+        />
         <motion.div
           animate={{ scale: [1, 1.15, 1] }}
           transition={{ duration: 2, repeat: Infinity }}
         >
-          <Icon className="text-teal-500" size={24} />
+          <Icon size={24} style={{ color: 'var(--color-secondary-500)' }} />
         </motion.div>
-        <div className="h-1 w-12 bg-gradient-to-l from-transparent to-teal-500 rounded-full" />
+        <div
+          className="h-1 w-12 rounded-full"
+          style={{ background: 'linear-gradient(to left, transparent, var(--color-secondary-500))' }}
+        />
       </div>
-      <h2 className={`text-3xl md:text-5xl font-black text-navy-700 mb-3 ${centered ? '' : ''}`}>
+      <h2
+        className="text-3xl md:text-5xl font-black mb-3"
+        style={{ color: 'var(--color-text-primary)' }}
+      >
         {title}
       </h2>
       {subtitle && (
-        <p className="text-gray-600 text-lg max-w-2xl mx-auto leading-relaxed">
+        <p
+          className="text-lg max-w-2xl mx-auto leading-relaxed"
+          style={{ color: 'var(--color-text-secondary)' }}
+        >
           {subtitle}
         </p>
       )}

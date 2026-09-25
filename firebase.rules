@@ -7,6 +7,11 @@ service cloud.firestore {
         request.auth.token.email == 'admin@sovereign.com';
     }
 
+    match /settings/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /products/{id} {
       allow read: if true;
       allow write: if isAdmin();

@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useAuth } from '@/components/AuthProvider';
 import {
-  LayoutDashboard, Package, ShoppingCart, Tag
+  LayoutDashboard, Package, ShoppingCart, Tag, Palette
 } from 'lucide-react';
 import { useEffect } from 'react';
 import toast from 'react-hot-toast';
@@ -40,12 +40,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: `/${locale}/admin`, label: t('admin.dashboard'), icon: LayoutDashboard, exact: true },
     { href: `/${locale}/admin/products`, label: t('admin.products'), icon: Package },
     { href: `/${locale}/admin/orders`, label: t('admin.orders'), icon: ShoppingCart },
-    { href: `/${locale}/admin/coupons`, label: t('admin.coupons'), icon: Tag }
+    { href: `/${locale}/admin/coupons`, label: t('admin.coupons'), icon: Tag },
+    {
+      href: `/${locale}/admin/theme`,
+      label: locale === 'ar' ? 'الألوان' : 'Theme',
+      icon: Palette
+    }
   ];
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-black text-navy-700 mb-6">{t('admin.title')}</h1>
+      <h1 className="text-3xl font-black text-navy-800 mb-6">{t('admin.title')}</h1>
 
       <div className="grid lg:grid-cols-[240px_1fr] gap-6">
         <aside className="lg:sticky lg:top-24 h-fit">
@@ -55,7 +60,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               return (
                 <Link key={l.href} href={l.href}
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg font-semibold whitespace-nowrap transition-colors ${
-                    active ? 'bg-teal-500 text-white' : 'text-navy-700 hover:bg-gray-100'
+                    active
+                      ? 'bg-teal-500 text-white'
+                      : 'text-navy-700 hover:bg-gray-100'
                   }`}>
                   <l.icon size={20} />
                   {l.label}
