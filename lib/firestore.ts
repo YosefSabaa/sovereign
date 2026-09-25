@@ -49,7 +49,7 @@ export type CartItem = {
   variantName?: string;
 };
 
-export type PaymentMethod = 'cod' | 'vodafone_cash' | 'instapay';
+export type PaymentMethod = 'cod' | 'e_wallet' | 'instapay';
 
 export type Order = {
   id?: string;

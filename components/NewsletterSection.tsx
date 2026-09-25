@@ -145,7 +145,7 @@ export default function NewsletterSection() {
 
             <motion.a
               href={`https://wa.me/${
-                process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '201007790689'
+                process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '201277776457'
               }`}
               target="_blank"
               rel="noopener noreferrer"

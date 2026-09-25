@@ -18,14 +18,15 @@ import { formatPrice } from '@/lib/utils';
 import PageTransition from '@/components/PageTransition';
 import {
   Copy, Upload, CheckCircle2, AlertCircle, ArrowLeft, ArrowRight,
-  X, MapPin, Phone, User as UserIcon, Package, Sparkles, Clock,
-  Banknote, Wallet, Building2, Check
+  X, MapPin, Phone, User as UserIcon, Package, Sparkles,
+  Banknote, Smartphone, Building2, Check
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
   staggerContainer, staggerItem, fadeInUp, heartbeat
 } from '@/lib/animations';
 
+// 💳 طرق الدفع — "المحفظة الإلكترونية" عام
 const PAYMENT_METHODS: Array<{
   id: PaymentMethod;
   icon: any;
@@ -47,12 +48,12 @@ const PAYMENT_METHODS: Array<{
     needsReceipt: false
   },
   {
-    id: 'vodafone_cash',
-    icon: Wallet,
-    ar: 'فودافون كاش',
-    en: 'Vodafone Cash',
-    descAr: 'الدفع عبر محفظة فودافون كاش',
-    descEn: 'Pay via Vodafone Cash wallet',
+    id: 'e_wallet',
+    icon: Smartphone,
+    ar: 'المحفظة الإلكترونية',
+    en: 'E-Wallet',
+    descAr: 'فودافون كاش • إتصالات كاش • أورنج كاش • وي باي',
+    descEn: 'Vodafone • Etisalat • Orange • WE Pay',
     color: '#ef4444',
     needsReceipt: true
   },
@@ -87,7 +88,8 @@ export default function CheckoutPage() {
   const [coupon, setCoupon] = useState<AppliedCoupon | null>(null);
 
   const Arrow = locale === 'ar' ? ArrowLeft : ArrowRight;
-  const vodaNumber = process.env.NEXT_PUBLIC_VODAFONE_CASH || '01012345678';
+  const walletNumber =
+    process.env.NEXT_PUBLIC_E_WALLET_NUMBER || '01012345678';
   const instaPayHandle =
     process.env.NEXT_PUBLIC_INSTAPAY || 'sovereign@instapay';
 
@@ -642,10 +644,7 @@ export default function CheckoutPage() {
                               ? '💵 الدفع عند الاستلام'
                               : '💵 Cash on Delivery'}
                           </p>
-                          <p
-                            className="text-xs"
-                            style={{ color: '#10b981' }}
-                          >
+                          <p className="text-xs" style={{ color: '#10b981' }}>
                             {locale === 'ar'
                               ? 'سيتم التواصل معك من قبل فريقنا لتأكيد الطلب وموعد التسليم. الدفع نقداً عند استلام الطلب.'
                               : 'Our team will contact you to confirm your order. Pay cash on delivery.'}
@@ -655,9 +654,9 @@ export default function CheckoutPage() {
                     </motion.div>
                   )}
 
-                  {paymentMethod === 'vodafone_cash' && (
+                  {paymentMethod === 'e_wallet' && (
                     <motion.div
-                      key="voda"
+                      key="wallet"
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
@@ -668,8 +667,8 @@ export default function CheckoutPage() {
                         style={{ color: 'var(--color-text-secondary)' }}
                       >
                         {locale === 'ar'
-                          ? 'قم بتحويل المبلغ إلى رقم فودافون كاش التالي ثم ارفع صورة التحويل.'
-                          : 'Transfer the amount to the Vodafone Cash number below, then upload the receipt.'}
+                          ? 'قم بتحويل المبلغ إلى رقم المحفظة الإلكترونية التالي (يقبل جميع المحافظ) ثم ارفع صورة التحويل.'
+                          : 'Transfer the amount to the e-wallet number below (all wallets accepted), then upload the receipt.'}
                       </p>
 
                       <div
@@ -684,8 +683,8 @@ export default function CheckoutPage() {
                           style={{ color: '#ef4444' }}
                         >
                           {locale === 'ar'
-                            ? 'رقم فودافون كاش:'
-                            : 'Vodafone Cash Number:'}
+                            ? 'رقم المحفظة الإلكترونية:'
+                            : 'E-Wallet Number:'}
                         </p>
                         <div className="flex items-center justify-between gap-3 flex-wrap">
                           <span
@@ -693,18 +692,66 @@ export default function CheckoutPage() {
                             style={{ color: 'var(--color-text-primary)' }}
                             dir="ltr"
                           >
-                            {vodaNumber}
+                            {walletNumber}
                           </span>
                           <motion.button
                             type="button"
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            onClick={() => copyToClipboard(vodaNumber)}
+                            onClick={() => copyToClipboard(walletNumber)}
                             className="btn-secondary px-4 py-2.5 text-sm"
                           >
                             <Copy size={16} />
                             {t('checkout.copy')}
                           </motion.button>
+                        </div>
+                      </div>
+
+                      <div
+                        className="rounded-2xl p-4"
+                        style={{
+                          background: 'rgba(212, 175, 55, 0.08)',
+                          border: '1px solid rgba(212, 175, 55, 0.3)'
+                        }}
+                      >
+                        <p
+                          className="text-xs font-bold mb-2"
+                          style={{ color: 'var(--color-secondary-500)' }}
+                        >
+                          💡{' '}
+                          {locale === 'ar'
+                            ? 'المحافظ المدعومة:'
+                            : 'Supported wallets:'}
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {(locale === 'ar'
+                            ? [
+                                'فودافون كاش',
+                                'إتصالات كاش',
+                                'أورنج كاش',
+                                'وي باي'
+                              ]
+                            : [
+                                'Vodafone Cash',
+                                'Etisalat Cash',
+                                'Orange Cash',
+                                'WE Pay'
+                              ]
+                          ).map((w) => (
+                            <span
+                              key={w}
+                              className="px-2.5 py-1 rounded-full text-[10px] md:text-xs font-bold"
+                              style={{
+                                background:
+                                  'rgba(212, 175, 55, 0.15)',
+                                color: 'var(--color-secondary-500)',
+                                border:
+                                  '1px solid rgba(212, 175, 55, 0.3)'
+                              }}
+                            >
+                              {w}
+                            </span>
+                          ))}
                         </div>
                       </div>
 

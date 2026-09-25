@@ -64,7 +64,11 @@ export default function Navbar() {
     { href: `/${locale}/products`, label: t('products') },
     ...(mounted && user
       ? [{ href: `/${locale}/orders`, label: t('orders') }]
-      : [])
+      : []),
+    {
+      href: `/${locale}/contact`,
+      label: locale === 'ar' ? 'تواصل معنا' : 'Contact'
+    }
   ];
 
   const switchLocale = () => {

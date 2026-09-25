@@ -70,9 +70,9 @@
     "name": "Name",
     "phone": "Phone",
     "address": "Address",
-    "vodafoneCash": "Pay via Vodafone Cash",
-    "vodafoneInstructions": "Transfer the order amount to the Vodafone Cash number below, then upload your receipt",
-    "vodafoneNumber": "Vodafone Cash Number",
+    "eWallet": "Pay via E-Wallet",
+    "eWalletInstructions": "Transfer the order amount to the e-wallet number below, then upload the receipt",
+    "eWalletNumber": "E-Wallet Number",
     "copy": "Copy",
     "copied": "Copied!",
     "uploadReceipt": "Upload Receipt",
@@ -170,5 +170,18 @@
     "all": "All",
     "egp": "EGP",
     "back": "Back"
+  },
+  "contact": {
+    "title": "Contact Us",
+    "subtitle": "Our team is ready to help",
+    "phone": "Call Us",
+    "whatsapp": "WhatsApp",
+    "instagram": "Instagram",
+    "tiktok": "TikTok",
+    "email": "Email",
+    "location": "Location",
+    "hours": "Working Hours",
+    "about": "About Sovereign",
+    "sendMessage": "Send Message"
   }
 }
