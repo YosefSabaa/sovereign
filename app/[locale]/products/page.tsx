@@ -8,7 +8,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getProducts, Product } from '@/lib/firestore';
 import ProductCard from '@/components/ProductCard';
 import PageTransition from '@/components/PageTransition';
-import MedicalSectionTitle from '@/components/MedicalSectionTitle';
 import { Search, Stethoscope, X, Filter, Package } from 'lucide-react';
 import { staggerContainer, staggerItem, fadeInUp } from '@/lib/animations';
 
@@ -24,17 +23,14 @@ function ProductsContent() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
 
-  // 🎯 اقرأ الـ category من الـ URL
   useEffect(() => {
     const urlCategory = searchParams.get('category');
-    if (urlCategory) {
-      setCategory(urlCategory);
-    }
+    if (urlCategory) setCategory(urlCategory);
   }, [searchParams]);
 
   useEffect(() => {
     getProducts()
-      .then(p => {
+      .then((p) => {
         setProducts(p);
         setFiltered(p);
         setLoading(false);
@@ -42,48 +38,41 @@ function ProductsContent() {
       .catch(() => setLoading(false));
   }, []);
 
-  // 🎯 فلترة محسّنة
   useEffect(() => {
     let result = products;
-
     if (search.trim()) {
       const q = search.toLowerCase().trim();
       result = result.filter(
-        p =>
+        (p) =>
           p.nameAr.toLowerCase().includes(q) ||
           p.nameEn.toLowerCase().includes(q) ||
           p.category.toLowerCase().includes(q)
       );
     }
-
     if (category !== 'all') {
       result = result.filter(
-        p => p.category.toLowerCase() === category.toLowerCase()
+        (p) => p.category.toLowerCase() === category.toLowerCase()
       );
     }
-
     setFiltered(result);
   }, [search, category, products]);
 
   const categories = [
     'all',
-    ...Array.from(new Set(products.map(p => p.category)))
+    ...Array.from(new Set(products.map((p) => p.category)))
   ];
 
-  // 🎯 لما المستخدم يضغط على تصنيف، حدّث الـ URL
   const handleCategoryChange = (newCategory: string) => {
     setCategory(newCategory);
-
     const params = new URLSearchParams(searchParams.toString());
     if (newCategory === 'all') {
       params.delete('category');
     } else {
       params.set('category', newCategory);
     }
-
-    const queryString = params.toString();
+    const qs = params.toString();
     router.push(
-      `/${locale}/products${queryString ? `?${queryString}` : ''}`,
+      `/${locale}/products${qs ? `?${qs}` : ''}`,
       { scroll: false }
     );
   };
@@ -96,34 +85,71 @@ function ProductsContent() {
 
   return (
     <PageTransition>
-      <div className="relative min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50 overflow-hidden">
-        {/* Decorative background */}
+      <div
+        className="relative min-h-screen overflow-hidden"
+        style={{ background: 'var(--color-bg-base)' }}
+      >
+        {/* Decorative orbs */}
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-20 -right-20 w-96 h-96 bg-teal-200/20 rounded-full blur-3xl" />
-          <div className="absolute bottom-20 -left-20 w-96 h-96 bg-navy-200/20 rounded-full blur-3xl" />
           <div
-            className="absolute inset-0 opacity-[0.03]"
-            style={{
-              backgroundImage: `
-                linear-gradient(to right, #1e3a5f 1px, transparent 1px),
-                linear-gradient(to bottom, #1e3a5f 1px, transparent 1px)
-              `,
-              backgroundSize: '50px 50px'
-            }}
+            className="absolute top-20 -right-20 w-96 h-96 rounded-full blur-3xl opacity-10"
+            style={{ background: 'var(--color-secondary-500)' }}
+          />
+          <div
+            className="absolute bottom-20 -left-20 w-96 h-96 rounded-full blur-3xl opacity-10"
+            style={{ background: 'var(--color-primary-500)' }}
           />
         </div>
 
         <div className="max-w-7xl mx-auto px-4 py-12 relative">
           {/* Header */}
-          <MedicalSectionTitle
-            title={t('nav.products')}
-            subtitle={
-              locale === 'ar'
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center mb-12"
+          >
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div
+                className="h-1 w-12 rounded-full"
+                style={{
+                  background:
+                    'linear-gradient(to right, transparent, var(--color-secondary-500))'
+                }}
+              />
+              <motion.div
+                animate={{ scale: [1, 1.15, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                <Stethoscope
+                  size={24}
+                  style={{ color: 'var(--color-secondary-500)' }}
+                />
+              </motion.div>
+              <div
+                className="h-1 w-12 rounded-full"
+                style={{
+                  background:
+                    'linear-gradient(to left, transparent, var(--color-secondary-500))'
+                }}
+              />
+            </div>
+
+            <h1
+              className="text-3xl md:text-5xl font-black mb-3"
+              style={{ color: 'var(--color-text-primary)' }}
+            >
+              {t('nav.products')}
+            </h1>
+
+            <p
+              className="text-lg max-w-2xl mx-auto"
+              style={{ color: 'var(--color-text-secondary)' }}
+            >
+              {locale === 'ar'
                 ? 'اكتشف مجموعتنا من الأدوات الطبية والسكرابات عالية الجودة'
-                : 'Discover our collection of premium medical gear'
-            }
-            icon={Stethoscope}
-          />
+                : 'Discover our collection of premium medical gear'}
+            </p>
+          </motion.div>
 
           {/* Filters */}
           <motion.div
@@ -132,23 +158,30 @@ function ProductsContent() {
             variants={staggerContainer}
             className="mb-10"
           >
-            {/* Search bar */}
+            {/* Search */}
             <motion.div variants={fadeInUp} className="mb-6">
               <div className="relative max-w-2xl mx-auto">
                 <Search
-                  className="absolute top-1/2 -translate-y-1/2 left-5 text-gray-400"
+                  className="absolute top-1/2 -translate-y-1/2 left-5"
                   size={22}
+                  style={{ color: 'var(--color-text-muted)' }}
                 />
                 <input
                   type="text"
                   value={search}
-                  onChange={e => setSearch(e.target.value)}
+                  onChange={(e) => setSearch(e.target.value)}
                   placeholder={
                     locale === 'ar'
                       ? 'ابحث عن منتج...'
                       : 'Search for a product...'
                   }
-                  className="w-full pl-14 pr-14 py-4 rounded-full border-2 border-gray-200 focus:border-teal-500 focus:ring-4 focus:ring-teal-500/20 outline-none transition-all bg-white shadow-lg text-lg font-medium"
+                  className="w-full pl-14 pr-14 py-4 rounded-full outline-none transition-all text-lg font-medium"
+                  style={{
+                    background: 'var(--color-bg-card)',
+                    border: '2px solid rgba(212, 175, 55, 0.2)',
+                    color: 'var(--color-text-primary)',
+                    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)'
+                  }}
                 />
                 <AnimatePresence>
                   {search && (
@@ -157,7 +190,8 @@ function ProductsContent() {
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.5 }}
                       onClick={() => setSearch('')}
-                      className="absolute top-1/2 -translate-y-1/2 right-5 text-gray-400 hover:text-red-500 transition-colors"
+                      className="absolute top-1/2 -translate-y-1/2 right-5"
+                      style={{ color: 'var(--color-text-muted)' }}
                     >
                       <X size={22} />
                     </motion.button>
@@ -171,23 +205,39 @@ function ProductsContent() {
               variants={fadeInUp}
               className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-hide"
             >
-              <div className="flex items-center gap-2 text-navy-700 font-bold flex-shrink-0">
-                <Filter size={18} />
+              <div
+                className="flex items-center gap-2 font-bold flex-shrink-0"
+                style={{ color: 'var(--color-text-primary)' }}
+              >
+                <Filter
+                  size={18}
+                  style={{ color: 'var(--color-secondary-500)' }}
+                />
                 <span className="hidden md:inline">
                   {locale === 'ar' ? 'التصنيف:' : 'Filter:'}
                 </span>
               </div>
-              {categories.map(c => (
+              {categories.map((c) => (
                 <motion.button
                   key={c}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => handleCategoryChange(c)}
-                  className={`px-5 py-2.5 rounded-full font-bold whitespace-nowrap transition-all duration-300 ${
+                  className="px-5 py-2.5 rounded-full font-bold whitespace-nowrap transition-all duration-300"
+                  style={
                     category.toLowerCase() === c.toLowerCase()
-                      ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg shadow-teal-500/30'
-                      : 'bg-white text-navy-700 border-2 border-gray-200 hover:border-teal-500'
-                  }`}
+                      ? {
+                          background: `linear-gradient(to right, var(--color-secondary-500), var(--color-secondary-600))`,
+                          color: '#0a1828',
+                          boxShadow: '0 10px 25px -5px var(--color-secondary-500)',
+                          border: '2px solid transparent'
+                        }
+                      : {
+                          background: 'var(--color-bg-card)',
+                          color: 'var(--color-text-primary)',
+                          border: '2px solid rgba(212, 175, 55, 0.2)'
+                        }
+                  }
                 >
                   {c === 'all'
                     ? locale === 'ar'
@@ -207,14 +257,24 @@ function ProductsContent() {
                   exit={{ opacity: 0, y: -10 }}
                   className="mt-4 flex items-center gap-2"
                 >
-                  <span className="text-sm text-gray-500">
+                  <span
+                    className="text-sm"
+                    style={{ color: 'var(--color-text-muted)' }}
+                  >
                     {locale === 'ar' ? 'تصفية بـ:' : 'Filtering by:'}
                   </span>
-                  <span className="inline-flex items-center gap-2 bg-teal-50 text-teal-700 px-3 py-1.5 rounded-full text-sm font-bold border border-teal-200">
+                  <span
+                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-bold"
+                    style={{
+                      background: 'rgba(212, 175, 55, 0.15)',
+                      color: 'var(--color-secondary-500)',
+                      border: '1px solid rgba(212, 175, 55, 0.3)'
+                    }}
+                  >
                     {category}
                     <button
                       onClick={() => handleCategoryChange('all')}
-                      className="hover:bg-teal-200 rounded-full p-0.5 transition-colors"
+                      className="rounded-full p-0.5 hover:opacity-70"
                     >
                       <X size={14} />
                     </button>
@@ -224,12 +284,13 @@ function ProductsContent() {
             </AnimatePresence>
           </motion.div>
 
-          {/* Results count */}
+          {/* Count */}
           {!loading && (
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-center text-gray-500 mb-6 font-medium"
+              className="text-center mb-6 font-medium"
+              style={{ color: 'var(--color-text-secondary)' }}
             >
               {locale === 'ar'
                 ? `عرض ${filtered.length} من ${products.length} منتج`
@@ -237,13 +298,14 @@ function ProductsContent() {
             </motion.p>
           )}
 
-          {/* Products grid */}
+          {/* Products */}
           {loading ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {[...Array(8)].map((_, i) => (
                 <motion.div
                   key={i}
-                  className="h-80 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl"
+                  className="h-80 rounded-2xl"
+                  style={{ background: 'var(--color-bg-card)' }}
                   animate={{ opacity: [0.5, 1, 0.5] }}
                   transition={{
                     duration: 1.5,
@@ -259,13 +321,28 @@ function ProductsContent() {
               animate={{ opacity: 1, y: 0 }}
               className="text-center py-20"
             >
-              <div className="w-32 h-32 mx-auto bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mb-6">
-                <Package size={60} className="text-gray-400" />
+              <div
+                className="w-32 h-32 mx-auto rounded-full flex items-center justify-center mb-6"
+                style={{
+                  background: 'var(--color-bg-card)',
+                  border: '2px dashed rgba(212, 175, 55, 0.3)'
+                }}
+              >
+                <Package
+                  size={60}
+                  style={{ color: 'var(--color-text-muted)' }}
+                />
               </div>
-              <h3 className="text-2xl font-bold text-navy-700 mb-2">
+              <h3
+                className="text-2xl font-bold mb-2"
+                style={{ color: 'var(--color-text-primary)' }}
+              >
                 {locale === 'ar' ? 'لا توجد نتائج' : 'No results'}
               </h3>
-              <p className="text-gray-500 mb-6">
+              <p
+                className="mb-6"
+                style={{ color: 'var(--color-text-secondary)' }}
+              >
                 {locale === 'ar'
                   ? 'جرّب البحث بكلمات تانية'
                   : 'Try searching with different keywords'}
@@ -282,7 +359,7 @@ function ProductsContent() {
               className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
             >
               <AnimatePresence mode="popLayout">
-                {filtered.map(p => (
+                {filtered.map((p) => (
                   <motion.div
                     key={p.id}
                     layout
@@ -307,8 +384,17 @@ export default function ProductsPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
+        <div
+          className="min-h-screen flex items-center justify-center"
+          style={{ background: 'var(--color-bg-base)' }}
+        >
+          <div
+            className="w-12 h-12 rounded-full animate-spin"
+            style={{
+              border: '4px solid var(--color-secondary-500)',
+              borderTopColor: 'transparent'
+            }}
+          />
         </div>
       }
     >
