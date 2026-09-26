@@ -156,6 +156,11 @@ export default function VariantSelector({
             const isSelected = selectedId === variant.id;
             const available = isVariantAvailable(type, variant);
 
+            // هل في تعديل سعر حقيقي (ليس 0 أو undefined)
+            const hasPriceAdjustment =
+              typeof variant.priceAdjustment === 'number' &&
+              variant.priceAdjustment !== 0;
+
             if (isColor) {
               return (
                 <motion.button
@@ -226,14 +231,13 @@ export default function VariantSelector({
                   textDecoration: !available ? 'line-through' : 'none'
                 }}
               >
-                {variant.name}
-                {variant.priceAdjustment &&
-                  variant.priceAdjustment !== 0 && (
-                    <span className="text-xs ml-1 block md:inline">
-                      {variant.priceAdjustment > 0 ? '+' : ''}
-                      {variant.priceAdjustment}
-                    </span>
-                  )}
+                <span>{variant.name}</span>
+                {hasPriceAdjustment && (
+                  <span className="text-xs ml-1">
+                    {variant.priceAdjustment! > 0 ? '+' : ''}
+                    {variant.priceAdjustment}
+                  </span>
+                )}
 
                 {/* ✅ يظهر رقم المخزون فقط لو أقل من 5 وأكبر من 0 وغير مختار */}
                 {available &&
