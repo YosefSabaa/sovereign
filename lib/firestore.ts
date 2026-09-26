@@ -16,6 +16,15 @@ export type ProductVariant = {
   hexColor?: string;
 };
 
+// 🎯 تركيبة variants (مقاس + لون)
+export type VariantCombination = {
+  id: string;
+  variantIds: string[];
+  stock: number;
+  priceAdjustment?: number;
+  image?: string;
+};
+
 export type Product = {
   id?: string;
   nameAr: string;
@@ -27,6 +36,7 @@ export type Product = {
   image: string;
   images?: string[];
   variants?: ProductVariant[];
+  combinations?: VariantCombination[];
   flashSale?: {
     enabled: boolean;
     discountPercent: number;
@@ -102,6 +112,67 @@ export type WishlistItem = {
   userId: string;
   productId: string;
   createdAt?: Timestamp;
+};
+
+// ==================== ANNOUNCEMENTS TYPES ====================
+
+export type Announcement = {
+  id: string;
+  textAr: string;
+  textEn: string;
+  active: boolean;
+  order: number;
+  emoji?: string;
+  createdAt?: Timestamp;
+};
+
+export type AnnouncementsSettings = {
+  enabled: boolean;
+  speed: number;
+  backgroundColor: string;
+  textColor: string;
+  announcements: Announcement[];
+};
+
+export const DEFAULT_ANNOUNCEMENTS: AnnouncementsSettings = {
+  enabled: true,
+  speed: 4,
+  backgroundColor: '#d4af37',
+  textColor: '#0a1828',
+  announcements: [
+    {
+      id: '1',
+      textAr: 'شحن مجاني للطلبات فوق 1000 ج.م',
+      textEn: 'Free shipping over 1000 EGP',
+      emoji: '🚚',
+      active: true,
+      order: 0
+    },
+    {
+      id: '2',
+      textAr: 'خصم 10% بكود SOVEREIGN10',
+      textEn: '10% off with code SOVEREIGN10',
+      emoji: '✨',
+      active: true,
+      order: 1
+    },
+    {
+      id: '3',
+      textAr: 'منتجات طبية معتمدة وجودة عالية',
+      textEn: 'Certified medical-grade products',
+      emoji: '🏥',
+      active: true,
+      order: 2
+    },
+    {
+      id: '4',
+      textAr: 'دفع آمن عبر المحفظة الإلكترونية',
+      textEn: 'Secure payment via e-wallet',
+      emoji: '💳',
+      active: true,
+      order: 3
+    }
+  ]
 };
 
 // ==================== HELPERS ====================
@@ -202,8 +273,13 @@ export const decrementStock = async (
   const product = snap.data() as Product;
 
   if (variantId && product.variants) {
+    // 🎯 variantId ممكن يكون "size_m|color_white" (أكثر من واحد)
+    const variantIds = variantId.split('|');
+
     const updatedVariants = product.variants.map((v) =>
-      v.id === variantId ? { ...v, stock: Math.max(0, v.stock - qty) } : v
+      variantIds.includes(v.id)
+        ? { ...v, stock: Math.max(0, v.stock - qty) }
+        : v
     );
     const newStock = updatedVariants.reduce((sum, v) => sum + v.stock, 0);
     await updateDoc(ref, { variants: updatedVariants, stock: newStock });
@@ -389,65 +465,6 @@ export const isInWishlist = async (
 };
 
 // ==================== ANNOUNCEMENTS ====================
-
-export type Announcement = {
-  id: string;
-  textAr: string;
-  textEn: string;
-  active: boolean;
-  order: number;
-  emoji?: string;
-  createdAt?: Timestamp;
-};
-
-export type AnnouncementsSettings = {
-  enabled: boolean;
-  speed: number;
-  backgroundColor: string;
-  textColor: string;
-  announcements: Announcement[];
-};
-
-export const DEFAULT_ANNOUNCEMENTS: AnnouncementsSettings = {
-  enabled: true,
-  speed: 4,
-  backgroundColor: '#d4af37',
-  textColor: '#0a1828',
-  announcements: [
-    {
-      id: '1',
-      textAr: 'شحن مجاني للطلبات فوق 1000 ج.م',
-      textEn: 'Free shipping over 1000 EGP',
-      emoji: '🚚',
-      active: true,
-      order: 0
-    },
-    {
-      id: '2',
-      textAr: 'خصم 10% بكود SOVEREIGN10',
-      textEn: '10% off with code SOVEREIGN10',
-      emoji: '✨',
-      active: true,
-      order: 1
-    },
-    {
-      id: '3',
-      textAr: 'منتجات طبية معتمدة وجودة عالية',
-      textEn: 'Certified medical-grade products',
-      emoji: '🏥',
-      active: true,
-      order: 2
-    },
-    {
-      id: '4',
-      textAr: 'دفع آمن عبر المحفظة الإلكترونية',
-      textEn: 'Secure payment via e-wallet',
-      emoji: '💳',
-      active: true,
-      order: 3
-    }
-  ]
-};
 
 export const getAnnouncements = async (): Promise<AnnouncementsSettings> => {
   try {
