@@ -1,7 +1,7 @@
 'use client';
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useLocale, useTranslations } from 'next-intl';
@@ -41,8 +41,12 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [qty, setQty] = useState(1);
 
-  const [selectedVariant, setSelectedVariant] =
-    useState<ProductVariant | null>(null);
+  // 🎯 Variants متعددة
+  const [selectedVariants, setSelectedVariants] = useState<ProductVariant[]>(
+    []
+  );
+  const [effectiveStock, setEffectiveStock] = useState(0);
+  const [variantsPriceAdjustment, setVariantsPriceAdjustment] = useState(0);
 
   const [rating, setRating] = useState(5);
   const [hoverRating, setHoverRating] = useState(0);
@@ -77,12 +81,6 @@ export default function ProductDetailPage() {
         }
         setProduct(p);
         setReviews(r);
-
-        // اختار أول variant متاح
-        if (p.variants && p.variants.length > 0) {
-          const firstAvailable = p.variants.find((v) => v.stock > 0);
-          setSelectedVariant(firstAvailable || p.variants[0]);
-        }
       })
       .catch((err) => {
         console.error(err);
@@ -97,6 +95,21 @@ export default function ProductDetailPage() {
       setInCompare(isInCompare(product.id));
     }
   }, [mounted, product?.id, isInWishlist, isInCompare]);
+
+  // 🎯 استقبل التغييرات من VariantSelector
+  const handleVariantsChange = useCallback(
+    (
+      selected: ProductVariant[],
+      stock: number,
+      adjustment: number
+    ) => {
+      setSelectedVariants(selected);
+      setEffectiveStock(stock);
+      setVariantsPriceAdjustment(adjustment);
+      setQty(1);
+    },
+    []
+  );
 
   // ==================== LOADING ====================
   if (loading) {
@@ -131,6 +144,7 @@ export default function ProductDetailPage() {
     );
   }
 
+  // ==================== ERROR ====================
   if (error) {
     return (
       <div
@@ -179,31 +193,34 @@ export default function ProductDetailPage() {
     ? Math.round(((product.oldPrice! - product.price) / product.oldPrice!) * 100)
     : 0;
 
-  // السعر النهائي بعد variant
-  const finalPrice = selectedVariant?.priceAdjustment
-    ? product.price + selectedVariant.priceAdjustment
-    : product.price;
+  // 🎯 السعر النهائي والمخزون
+  const finalPrice = product.price + variantsPriceAdjustment;
+  const availableStock =
+    selectedVariants.length > 0 ? effectiveStock : product.stock;
+  const variantName = selectedVariants.map((v) => v.name).join(' - ');
 
-  // المخزون المتاح
-  const availableStock = selectedVariant
-    ? selectedVariant.stock
-    : product.stock;
-
-  // الصور (بما فيها صور الـ variants)
+  // 🎯 صور المنتج
   const allImages = [
     ...(product.images || []),
     product.image,
     ...(product.variants?.filter((v) => v.image).map((v) => v.image!) || [])
-  ].filter(Boolean);
+  ].filter(Boolean) as string[];
 
-  // إزالة التكرار
   const uniqueImages = Array.from(new Set(allImages));
+
+  // 🎯 صورة الـ variant المختار
+  const variantImage =
+    selectedVariants.find((v) => v.image)?.image || null;
 
   const handleAdd = () => {
     if (!product.id) return;
 
     if (availableStock === 0) {
-      toast.error(locale === 'ar' ? 'غير متوفر' : 'Out of stock');
+      toast.error(
+        locale === 'ar'
+          ? 'هذه التركيبة غير متوفرة'
+          : 'This combination is not available'
+      );
       return;
     }
 
@@ -211,10 +228,10 @@ export default function ProductDetailPage() {
       productId: product.id,
       name,
       price: finalPrice,
-      image: selectedVariant?.image || product.image,
+      image: variantImage || product.image,
       qty,
-      variantId: selectedVariant?.id,
-      variantName: selectedVariant?.name
+      variantId: selectedVariants.map((v) => v.id).join('|'),
+      variantName: variantName
     });
 
     toast.success(locale === 'ar' ? 'تمت الإضافة للسلة ✓' : 'Added to cart ✓');
@@ -302,7 +319,6 @@ export default function ProductDetailPage() {
       className="min-h-screen py-8 px-4 relative overflow-hidden"
       style={{ background: 'var(--color-bg-base)' }}
     >
-      {/* Decorative */}
       <div className="absolute inset-0 pointer-events-none">
         <div
           className="absolute top-20 -right-20 w-96 h-96 rounded-full blur-3xl opacity-20"
@@ -352,7 +368,7 @@ export default function ProductDetailPage() {
 
         {/* Main Grid */}
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-14 mb-16">
-          {/* ============ IMAGE ============ */}
+          {/* IMAGE */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
@@ -403,7 +419,7 @@ export default function ProductDetailPage() {
             </div>
           </motion.div>
 
-          {/* ============ INFO ============ */}
+          {/* INFO */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
@@ -535,15 +551,12 @@ export default function ProductDetailPage() {
               </p>
             </div>
 
-            {/* Variants Selector */}
+            {/* 🎯 Variants Selector */}
             {product.variants && product.variants.length > 0 && (
               <VariantSelector
                 variants={product.variants}
-                selectedId={selectedVariant?.id || null}
-                onSelect={(v) => {
-                  setSelectedVariant(v);
-                  setQty(1);
-                }}
+                combinations={product.combinations}
+                onSelectionChange={handleVariantsChange}
               />
             )}
 
@@ -579,9 +592,7 @@ export default function ProductDetailPage() {
                 </span>
                 <motion.button
                   whileTap={{ scale: 0.9 }}
-                  onClick={() =>
-                    setQty(Math.min(availableStock, qty + 1))
-                  }
+                  onClick={() => setQty(Math.min(availableStock, qty + 1))}
                   disabled={qty >= availableStock}
                   className="p-3 transition-colors disabled:opacity-30"
                   style={{ color: 'var(--color-text-primary)' }}
@@ -686,7 +697,7 @@ export default function ProductDetailPage() {
           </motion.div>
         </div>
 
-        {/* ============ REVIEWS ============ */}
+        {/* REVIEWS */}
         <section
           className="pt-12"
           style={{ borderTop: '1px solid rgba(212, 175, 55, 0.15)' }}
@@ -711,14 +722,12 @@ export default function ProductDetailPage() {
                 className="text-sm"
                 style={{ color: 'var(--color-text-muted)' }}
               >
-                {reviews.length}{' '}
-                {locale === 'ar' ? 'تقييم' : 'reviews'}
+                {reviews.length} {locale === 'ar' ? 'تقييم' : 'reviews'}
               </p>
             </div>
           </div>
 
           <div className="grid lg:grid-cols-5 gap-8">
-            {/* List */}
             <div className="lg:col-span-3 space-y-4">
               {reviews.length === 0 ? (
                 <div
@@ -809,7 +818,6 @@ export default function ProductDetailPage() {
               )}
             </div>
 
-            {/* Form */}
             <div className="lg:col-span-2">
               <form
                 onSubmit={submitReview}
@@ -906,7 +914,7 @@ export default function ProductDetailPage() {
           </div>
         </section>
 
-        {/* ============ RELATED PRODUCTS ============ */}
+        {/* RELATED PRODUCTS */}
         <RelatedProducts
           category={product.category}
           excludeId={product.id!}
