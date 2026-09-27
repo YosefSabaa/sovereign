@@ -10,6 +10,7 @@ import {
 } from '@/lib/firestore';
 import { Timestamp } from 'firebase/firestore';
 import { formatPrice } from '@/lib/utils';
+import ImageUploader from '@/components/ImageUploader';
 import {
   Plus, Pencil, Trash2, X, Save, Settings, Zap, Clock
 } from 'lucide-react';
@@ -55,7 +56,15 @@ export default function AdminProductsPage() {
   };
 
   const openEdit = (p: Product) => {
-    setEditing({ ...p });
+    setEditing({
+      ...p,
+      images:
+        p.images && p.images.length > 0
+          ? p.images
+          : p.image
+            ? [p.image]
+            : []
+    });
     setIsNew(false);
   };
 
@@ -66,23 +75,44 @@ export default function AdminProductsPage() {
 
   const save = async () => {
     if (!editing) return;
+
     if (!editing.nameAr || !editing.nameEn || editing.price <= 0) {
       toast.error(locale === 'ar' ? 'أكمل البيانات' : 'Fill all fields');
       return;
     }
+
+    const finalImages = editing.images || [];
+    const finalImage = finalImages[0] || editing.image || '';
+
+    if (!finalImage) {
+      toast.error(
+        locale === 'ar'
+          ? 'أضف صورة واحدة على الأقل'
+          : 'Add at least one image'
+      );
+      return;
+    }
+
     try {
+      const dataToSave: any = {
+        ...editing,
+        image: finalImage,
+        images: finalImages
+      };
+
       if (isNew) {
-        const { id, ...data } = editing as any;
+        const { id, ...data } = dataToSave;
         await addProduct(data);
         toast.success(locale === 'ar' ? 'تمت الإضافة ✓' : 'Added ✓');
       } else {
-        const { id, ...data } = editing as any;
+        const { id, ...data } = dataToSave;
         await updateProduct(id, data);
         toast.success(locale === 'ar' ? 'تم التحديث ✓' : 'Updated ✓');
       }
       close();
       load();
     } catch (e) {
+      console.error(e);
       toast.error(t('auth.error'));
     }
   };
@@ -259,7 +289,7 @@ export default function AdminProductsPage() {
                                 color: '#3b82f6'
                               }}
                             >
-                              {p.images.length + 1}{' '}
+                              {p.images.length}{' '}
                               {locale === 'ar' ? 'صور' : 'images'}
                             </span>
                           )}
@@ -410,7 +440,7 @@ export default function AdminProductsPage() {
         </div>
       )}
 
-      {/* ============ MODAL ============ */}
+      {/* MODAL */}
       <AnimatePresence>
         {editing && (
           <motion.div
@@ -449,7 +479,10 @@ export default function AdminProductsPage() {
                 <button
                   onClick={close}
                   className="p-2 rounded-lg transition-colors"
-                  style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    color: '#ef4444'
+                  }}
                 >
                   <X size={20} />
                 </button>
@@ -564,31 +597,37 @@ export default function AdminProductsPage() {
                   />
                 </div>
 
-                <div className="md:col-span-2">
-                  <label className="label">{t('admin.fields.image')}</label>
-                  <input
-                    value={editing.image}
-                    onChange={(e) =>
-                      setEditing({ ...editing, image: e.target.value })
+                {/* 📸 رفع صور المنتج */}
+                <div
+                  className="md:col-span-2 p-4 rounded-2xl"
+                  style={{
+                    background: 'var(--color-bg-elevated)',
+                    border: '1px solid rgba(212, 175, 55, 0.2)'
+                  }}
+                >
+                  <ImageUploader
+                    images={
+                      editing.images && editing.images.length > 0
+                        ? editing.images
+                        : editing.image
+                          ? [editing.image]
+                          : []
                     }
-                    className="input"
-                    dir="ltr"
-                    placeholder="https://..."
+                    onChange={(imgs) => {
+                      setEditing({
+                        ...editing,
+                        images: imgs,
+                        image: imgs[0] || editing.image || ''
+                      });
+                    }}
+                    maxImages={8}
+                    folder="products"
+                    label={{ ar: 'صور المنتج', en: 'Product Images' }}
+                    allowUrl={true}
                   />
                 </div>
 
-                {editing.image && (
-                  <div className="md:col-span-2">
-                    <img
-                      src={editing.image}
-                      alt="preview"
-                      className="w-32 h-32 object-cover rounded-xl"
-                      style={{ border: '1px solid rgba(212, 175, 55, 0.2)' }}
-                    />
-                  </div>
-                )}
-
-                {/* ============ FLASH SALE ============ */}
+                {/* FLASH SALE */}
                 <div
                   className="md:col-span-2 p-4 rounded-2xl"
                   style={{
@@ -689,7 +728,10 @@ export default function AdminProductsPage() {
                         />
                       </div>
 
-                      <div className="col-span-2 text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                      <div
+                        className="col-span-2 text-xs"
+                        style={{ color: 'var(--color-text-muted)' }}
+                      >
                         {locale === 'ar'
                           ? `ينتهي في: ${new Date(
                               Date.now() + flashSaleHours * 60 * 60 * 1000
@@ -713,7 +755,11 @@ export default function AdminProductsPage() {
                   >
                     <Settings
                       size={20}
-                      style={{ color: '#8b5cf6', flexShrink: 0, marginTop: 2 }}
+                      style={{
+                        color: '#8b5cf6',
+                        flexShrink: 0,
+                        marginTop: 2
+                      }}
                     />
                     <div>
                       <p
@@ -721,16 +767,16 @@ export default function AdminProductsPage() {
                         style={{ color: '#8b5cf6' }}
                       >
                         {locale === 'ar'
-                          ? 'صور متعددة وخيارات'
-                          : 'Multiple Images & Variants'}
+                          ? 'الخيارات (المقاسات والألوان)'
+                          : 'Variants (Sizes & Colors)'}
                       </p>
                       <p
                         className="text-xs mb-2"
                         style={{ color: 'var(--color-text-secondary)' }}
                       >
                         {locale === 'ar'
-                          ? 'لإضافة صور متعددة ومقاسات وألوان، افتح الصفحة المتقدمة.'
-                          : 'To add multiple images, sizes, and colors, open the advanced page.'}
+                          ? 'لإضافة مقاسات وألوان، افتح الصفحة المتقدمة.'
+                          : 'To add sizes and colors, open the advanced page.'}
                       </p>
                       <Link
                         href={`/${locale}/admin/products/${editing.id}`}
